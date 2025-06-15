@@ -11,7 +11,7 @@
 
 
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
-    : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background)
+    : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background), locked_to_position(false), current_bearing(0.0f)
 {
 
     auto container = new GuiElement(this, "");
@@ -19,22 +19,31 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
 
     auto left_container = new GuiElement(container, "");
     left_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setAttribute("layout", "vertical");
+    left_container->setMargins(20);
 
     auto right_container = new GuiElement(container, "");
-    right_container->setSize(250, GuiElement::GuiSizeMax)->setAttribute("layout", "vertical");
+    right_container->setSize(220, GuiElement::GuiSizeMax)->setAttribute("layout", "vertical");
+    right_container->setMargins(20);
 
     auto top_left_container = new GuiElement(left_container, "");
     top_left_container->setSize(GuiElement::GuiSizeMax, 50)->setAttribute("layout", "horizontal");
+    top_left_container->setMargins(20);
 
-    auto bottom_left_container = new GuiElement(left_container, "");
-    bottom_left_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    // two bottom 
+    auto radar_container = new GuiElement(left_container, "");
+    radar_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+
+    auto sensor_container = new GuiElement(left_container, "");
+    sensor_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setVisible(false);
 
     // Fill right bar
     sensor_bearing = new GuiRotationDial(right_container, "BEARING_AIM", -90, 360 - 90, 0, [](float value){});
     sensor_bearing->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     
 
-    auto lock_button = new GuiButton(right_container, "SENSOR_LOCK_POSITION", tr("SensorButton", "Lock Position"), []() {});
+    auto lock_button = new GuiToggleButton(right_container, "SENSOR_LOCK_POSITION", tr("SensorButton", "Lock Position"), [this](bool value) {
+        this->locked_to_position = value;
+    });
     lock_button->setSize(GuiElement::GuiSizeMax, 50);
 
     auto mark_bearing_button = new GuiButton(right_container, "SENSOR_MARK_BEARING", tr("SensorButton", "Mark Bearing"), []() {});
@@ -46,25 +55,30 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     auto reset_marks_button = new GuiButton(right_container, "SENSOR_RESET_MARKS", tr("SensorButton", "Reset Marks"), []() {});
     reset_marks_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto link_probe_button = new GuiButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), []() {});
+    auto link_probe_button = new GuiToggleButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), [](bool value) {});
     link_probe_button->setSize(GuiElement::GuiSizeMax, 50);
 
     // Top buttons
-    auto toggle_map_button = new GuiButton(top_left_container, "SENSOR_TOGGLE_MAP", tr("SensorButton", "Toggle Map"), []() {});
-    toggle_map_button->setSize(GuiElement::GuiSizeMax, 50);
+    auto toggle_map_button = new GuiToggleButton(top_left_container, "SENSOR_TOGGLE_MAP", tr("SensorButton", "Toggle Map"), [radar_container, sensor_container](bool value)
+    {
+        radar_container->setVisible(value);
+        sensor_container->setVisible(!value);
+    });
+    toggle_map_button->setValue(true)->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto biological_button = new GuiButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), []() {});
+    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [](bool value) {});
     biological_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto electrical_button = new GuiButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), []() {});
+    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [](bool value) {});
     electrical_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto gravity_button = new GuiButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), []() {});
+    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [](bool value) {});
     gravity_button->setSize(GuiElement::GuiSizeMax, 50);
 
 
+    // Setup the radar container
     targets.setAllowWaypointSelection();
-    radar = new GuiRadarView(bottom_left_container, "SENSOR_RADAR", 50000.0f, &targets);
+    radar = new GuiRadarView(radar_container, "SENSOR_RADAR", 50000.0f, &targets);
     radar->longRange()->enableWaypoints()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
     radar->setAutoCentering(false);
     radar->setPosition(0, 0, sp::Alignment::TopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
@@ -76,6 +90,8 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         [this](glm::vec2 position) { //up
         }
     );
+
+    
 }
 
 void SensorScreen::onDraw(sp::RenderTarget& renderer)
