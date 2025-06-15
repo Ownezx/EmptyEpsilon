@@ -13,6 +13,8 @@ class GuiRadarView;
 class SensorScreen : public GuiOverlay
 {
 protected:
+    float current_bearing;
+    bool locked_to_position;
     void setSensorBearing(float bearing);
 
 public:
