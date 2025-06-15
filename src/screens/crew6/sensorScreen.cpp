@@ -1,9 +1,11 @@
 #include "sensorScreen.h"
 #include "i18n.h"
+#include "math.h"
 
 #include "components/radar.h"
 
 #include "screenComponents/radarView.h"
+#include "screenComponents/graph.h"
 
 #include "gui/gui2_rotationdial.h"
 #include "gui/gui2_button.h"
@@ -29,12 +31,16 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     top_left_container->setSize(GuiElement::GuiSizeMax, 50)->setAttribute("layout", "horizontal");
     top_left_container->setMargins(20);
 
-    // two bottom 
+    // Sensor graph
+    auto sensor_container = new GuiElement(left_container, "");
+    sensor_container->setSize(GuiElement::GuiSizeMax, 150);
+
+    // radar or time sensor bottom 
     auto radar_container = new GuiElement(left_container, "");
     radar_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
 
-    auto sensor_container = new GuiElement(left_container, "");
-    sensor_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setVisible(false);
+    auto time_sensor_container = new GuiElement(left_container, "");
+    time_sensor_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setVisible(false)->setAttribute("layout", "vertical");
 
     // Fill right bar
     sensor_bearing = new GuiRotationDial(right_container, "BEARING_AIM", -90, 360 - 90, 0, [](float value){});
@@ -59,10 +65,10 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     link_probe_button->setSize(GuiElement::GuiSizeMax, 50);
 
     // Top buttons
-    auto toggle_map_button = new GuiToggleButton(top_left_container, "SENSOR_TOGGLE_MAP", tr("SensorButton", "Toggle Map"), [radar_container, sensor_container](bool value)
+    auto toggle_map_button = new GuiToggleButton(top_left_container, "SENSOR_TOGGLE_MAP", tr("SensorButton", "Toggle Map"), [radar_container, time_sensor_container](bool value)
     {
         radar_container->setVisible(value);
-        sensor_container->setVisible(!value);
+        time_sensor_container->setVisible(!value);
     });
     toggle_map_button->setValue(true)->setSize(GuiElement::GuiSizeMax, 50);
 
@@ -91,6 +97,9 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         }
     );
 
+    // Setup the sensor container
+    biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH");
+    biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     
 }
 
