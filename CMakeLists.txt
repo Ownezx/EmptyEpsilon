@@ -263,6 +263,7 @@ set(MAIN_SOURCES
     src/screens/crew4/tacticalScreen.cpp
     src/screens/crew6/engineeringScreen.cpp
     src/screens/crew6/scienceScreen.cpp
+    src/screens/crew6/sensorScreen.cpp
     src/screens/crew6/relayScreen.cpp
     src/screens/crew6/weaponsScreen.cpp
     src/screens/crew6/helmsScreen.cpp
