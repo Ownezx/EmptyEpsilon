@@ -8,6 +8,7 @@
 
 class GuiRotationDial;
 class GuiRadarView;
+class GuiGraph;
 
 
 class SensorScreen : public GuiOverlay
@@ -22,6 +23,7 @@ public:
 
     GuiRotationDial* sensor_bearing;
     GuiRadarView* radar;
+    GuiGraph* biological_graph;
     TargetsContainer targets;
 
 
