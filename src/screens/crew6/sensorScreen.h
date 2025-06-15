@@ -7,6 +7,7 @@
 
 
 class GuiRotationDial;
+class GuiRadarView;
 
 
 class SensorScreen : public GuiOverlay
@@ -18,6 +19,9 @@ public:
     SensorScreen(GuiContainer* owner, CrewPosition crew_position=CrewPosition::scienceOfficer);
 
     GuiRotationDial* sensor_bearing;
+    GuiRadarView* radar;
+    TargetsContainer targets;
+
 
     virtual void onDraw(sp::RenderTarget& target) override;
     virtual void onUpdate() override;
