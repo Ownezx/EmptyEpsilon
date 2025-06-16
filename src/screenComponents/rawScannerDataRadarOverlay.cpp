@@ -27,13 +27,10 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     const int point_count = 512;
     float radius = std::min(rect.size.x, rect.size.y) / 2.0f;
 
-    std::vector<float> angles(point_count);
-    for (int i = 0; i < point_count; i++)
-    {
-        angles[i] = 360.0f * float(i) / float(point_count);
-    }
-
-    std::vector<RawScannerDataPoint> scanner_data = CalculateRawScannerData(view_position, angles, radar->getDistance() * 2);
+    std::vector<RawScannerDataPoint> scanner_data =
+        Calculate360RawScannerData(view_position,
+                                   point_count,
+                                   radar->getDistance() * 2);
 
     // Create a vertex array containing each data point.
     std::vector<glm::vec2> a_r;
@@ -46,7 +43,7 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
         float r = scanner_data[n].electrical;
         float g = scanner_data[n].biological;
         float b = scanner_data[n].gravity;
-        
+
         // ... and add vectors for each point.
         a_r.push_back(
             glm::vec2(rect.position.x + rect.size.x / 2.0f, rect.position.y + rect.size.y / 2.0f) +
