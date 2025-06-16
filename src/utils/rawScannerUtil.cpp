@@ -18,16 +18,21 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
     {
         // Don't measure our own ship.
         if (entity == my_spaceship)
+        {
+            printf("Skipping own ship\n");
             continue;
+        }
 
         // Initialize angle, distance, and scale variables.
-        float a_0, a_1;
         float dist = glm::length(transform.getPosition() - position);
 
         // If the object is further than the maximum range
         // ignore it
         if (dist > range)
+        {
+            printf("Skipping object at distance %f, further than range %f\n", dist, range);
             continue;
+        }
 
         float scale = 1.0;
         // The further away the object is, the less its effect on radar data.
@@ -64,6 +69,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
         {
             if (abs(angles[i] - a_center) > a_diff)
                 continue;
+            printf("Adding signature %f, %f, %f at angle %f\n", signature.biological, signature.electrical, signature.gravity, angles[i]);
 
             float summing_function_value = 0;
             if (p == 0)
@@ -72,12 +78,14 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
                 // signal function 1 - (x/(2*a_diff)^2
                 float temp = (a_center - angles[i]);
                 summing_function_value = 1 - temp * temp * temp * temp / a_diff2;
+                summing_function_value = 1;
             }
             else
             {
                 // If we intersect with it we do a quadratic interpolation with 1 depending on the closeness.
                 float temp = (a_center - angles[i]);
                 summing_function_value = (1 - temp * temp * temp * temp / M_PI) * p + 1 + p;
+                summing_function_value = 1;
             }
 
             // Now we do the first sum for things
@@ -92,6 +100,10 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
                 return_data_points[i].electrical += dynamic_signature->electrical;
                 return_data_points[i].gravity += dynamic_signature->gravity;
             }
+
+            return_data_points[i].biological = signature.biological * scale * summing_function_value;
+            return_data_points[i].electrical = signature.electrical * scale * summing_function_value;
+            return_data_points[i].gravity = signature.gravity * scale * summing_function_value;
         }
     }
 
@@ -101,9 +113,9 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
     // Now post processing to be as close to what it was before
     for (int i = 0; i < (int)angles.size(); i++)
     {
-        return_data_points[i].biological += std::clamp(return_data_points[i].biological, 0.0f, 1.0f);
-        return_data_points[i].electrical += std::clamp(return_data_points[i].electrical, 0.0f, 1.0f);
-        return_data_points[i].gravity += std::clamp(return_data_points[i].gravity, 0.0f, 1.0f);
+        //return_data_points[i].biological = std::clamp(return_data_points[i].biological, 0.0f, 1.0f);
+        //return_data_points[i].electrical = std::clamp(return_data_points[i].electrical, 0.0f, 1.0f);
+        //return_data_points[i].gravity = std::clamp(return_data_points[i].gravity, 0.0f, 1.0f);
 
         return_data_points[i].biological = random(-NOISE_FLOOR, NOISE_FLOOR) + return_data_points[i].biological * 30;
         return_data_points[i].electrical = random(-NOISE_FLOOR, NOISE_FLOOR) + random(-20, 20) * return_data_points[i].electrical;
