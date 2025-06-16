@@ -44,23 +44,22 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     for(int n = 0; n < point_count; n++)
     {
         // ... divide them by 5 ...
-        float r = scanner_data[n].electrical / 5;
-        float g = scanner_data[n].biological / 5;
-        float b = scanner_data[n].gravity / 5;
+        float r = scanner_data[n].electrical;
+        float g = scanner_data[n].biological;
+        float b = scanner_data[n].gravity;
         
-        //printf("Scanner data %f, %f, %f, at %f\n", r, g, b, angles[n]);
         // ... and add vectors for each point.
         a_r.push_back(
             glm::vec2(rect.position.x + rect.size.x / 2.0f, rect.position.y + rect.size.y / 2.0f) +
-            vec2FromAngle(float(n) / float(point_count) * 360.0f - view_rotation) * (radius * (0.95f - r / 500)));
+            vec2FromAngle(float(n) / float(point_count) * 360.0f - view_rotation) * (radius * (0.95f - r / 100)));
 
         a_g.push_back(
             glm::vec2(rect.position.x + rect.size.x / 2.0f, rect.position.y + rect.size.y / 2.0f) +
-            vec2FromAngle(float(n) / float(point_count) * 360.0f - view_rotation) * (radius * (0.92f - g / 500)));
+            vec2FromAngle(float(n) / float(point_count) * 360.0f - view_rotation) * (radius * (0.92f - g / 100)));
 
         a_b.push_back(
             glm::vec2(rect.position.x + rect.size.x / 2.0f, rect.position.y + rect.size.y / 2.0f) +
-            vec2FromAngle(float(n) / float(point_count) * 360.0f - view_rotation) * (radius * (0.89f - b / 500)));
+            vec2FromAngle(float(n) / float(point_count) * 360.0f - view_rotation) * (radius * (0.89f - b / 100)));
     }
 
     // Set a zero value at the "end" of the data point array.

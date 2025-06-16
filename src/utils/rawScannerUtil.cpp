@@ -7,6 +7,14 @@
 
 #define NOISE_FLOOR 1
 
+float sumFunction(float angle, float target_angle, float target_angle_width)
+{
+    float temp = (target_angle - angle) / target_angle_width;
+    return 1 - temp * temp ;
+}
+
+// TODO: MAKE THIS USE A START ANGLE/END ANGLE AND RESOLUTION TO BE ABLE
+// TO HANDLE THE CASE WHERE THE ANGLE OF THE OBJECT IS SMALLER THAN THE RESOLUTION
 std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std::vector<float> angles, float range)
 {
 
@@ -47,7 +55,6 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
         // p is used for quadratic interpolation later
         float p = 0;
         float a_diff;
-        float a_diff2;
 
         // If we're adjacent to the object ...
         if (physics && dist <= physics->getSize().x)
@@ -61,31 +68,25 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
             // Otherwise, measure the affected range of angles by the object's
             // distance and radius.
             a_diff = glm::degrees(asinf((physics ? physics->getSize().x : 300.0f) / dist));
-            a_diff2 = a_diff * 2;
         }
 
         // Now add the value to all relevant point
         for (int i = 0; i < (int)angles.size(); i++)
         {
-            if (abs(angles[i] - a_center) > a_diff)
+            if (abs(angles[i] - a_center) > abs(a_diff))
                 continue;
-            printf("Adding signature %f, %f, %f at angle %f\n", signature.biological, signature.electrical, signature.gravity, angles[i]);
 
             float summing_function_value = 0;
             if (p == 0)
             {
                 // If we do not intersect with the object we just use the sensor
                 // signal function 1 - (x/(2*a_diff)^2
-                float temp = (a_center - angles[i]);
-                summing_function_value = 1 - temp * temp * temp * temp / a_diff2;
-                summing_function_value = 1;
+                summing_function_value = sumFunction(angles[i], a_center, a_diff);
             }
             else
             {
                 // If we intersect with it we do a quadratic interpolation with 1 depending on the closeness.
-                float temp = (a_center - angles[i]);
-                summing_function_value = (1 - temp * temp * temp * temp / M_PI) * p + 1 + p;
-                summing_function_value = 1;
+                summing_function_value = sumFunction(angles[i], a_center, M_PI) * p + 1 + p;
             }
 
             // Now we do the first sum for things
