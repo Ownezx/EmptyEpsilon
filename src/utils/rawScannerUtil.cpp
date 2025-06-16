@@ -90,21 +90,21 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, std
             }
 
             // Now we do the first sum for things
-            return_data_points[i].biological = signature.biological;
-            return_data_points[i].electrical = signature.electrical;
-            return_data_points[i].gravity = signature.gravity;
+            float g = signature.biological;
+            float r = signature.electrical;
+            float b = signature.gravity;
 
             // Same with dynamic source
             if (dynamic_signature)
             {
-                return_data_points[i].biological += dynamic_signature->biological;
-                return_data_points[i].electrical += dynamic_signature->electrical;
-                return_data_points[i].gravity += dynamic_signature->gravity;
+                g += dynamic_signature->biological;
+                r += dynamic_signature->electrical;
+                b += dynamic_signature->gravity;
             }
 
-            return_data_points[i].biological = signature.biological * scale * summing_function_value;
-            return_data_points[i].electrical = signature.electrical * scale * summing_function_value;
-            return_data_points[i].gravity = signature.gravity * scale * summing_function_value;
+            return_data_points[i].biological += g * summing_function_value * scale;
+            return_data_points[i].electrical += r * summing_function_value * scale;
+            return_data_points[i].gravity += b * summing_function_value * scale;
         }
     }
 
