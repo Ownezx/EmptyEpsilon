@@ -15,15 +15,21 @@ class SensorScreen : public GuiOverlay
 {
 protected:
     float current_bearing;
+    float current_arc_size;
+    float min_arc_size;
     bool locked_to_position;
     void setSensorBearing(float bearing);
+
+    int point_count;
 
 public:
     SensorScreen(GuiContainer* owner, CrewPosition crew_position=CrewPosition::scienceOfficer);
 
     GuiRotationDial* sensor_bearing;
     GuiRadarView* radar;
+    GuiGraph* electrical_graph;
     GuiGraph* biological_graph;
+    GuiGraph* gravity_graph;
     TargetsContainer targets;
 
 

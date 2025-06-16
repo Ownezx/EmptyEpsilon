@@ -28,11 +28,12 @@ float farSumFunction(float angle, float target_angle, float target_angle_width, 
 
 }
 
-// TODO: MAKE THIS USE A START ANGLE/END ANGLE AND RESOLUTION TO BE ABLE
-// TO HANDLE THE CASE WHERE THE ANGLE OF THE OBJECT IS SMALLER THAN THE RESOLUTION
 std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, float start_angle, float arc_size, uint point_count, float range)
 {
 
+    if (start_angle<0)
+        start_angle += 360.0f;
+        
     // Initialize the data's amplitude along each of the three color bands.
     std::vector<RawScannerDataPoint> return_data_points(point_count);
 
@@ -117,11 +118,11 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
                 target_stop_angle_index = point_count - 1;
         }
 
-        printf("Indexes: %d to %d\n", target_start_angle_index, target_stop_angle_index);
+        // printf("Indexes: %d to %d\n", target_start_angle_index, target_stop_angle_index);
         // Now add the value to all relevant point
         for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
         {
-            printf("Adding to point %d, corresponding to angle %f\n", i, angles[i % point_count]);
+            // printf("Adding to point %d, corresponding to angle %f\n", i, angles[i % point_count]);
             float summing_function_value = 0;
             if (p == 0)
             {
