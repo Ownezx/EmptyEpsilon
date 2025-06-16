@@ -27,6 +27,8 @@ public:
     typedef std::function<void(sp::io::Pointer::Button button, glm::vec2 position)> bpfunc_t;
     typedef std::function<void(glm::vec2 position)> pfunc_t;
     typedef std::function<void(float position)>     ffunc_t;
+    typedef std::function<void(glm::vec2 position, float value)>  sfunc_t;
+    
 private:
     class GhostDot
     {
@@ -65,6 +67,7 @@ private:
     bpfunc_t mouse_down_func;
     pfunc_t mouse_drag_func;
     pfunc_t mouse_up_func;
+    sfunc_t mouse_wheel_func;
 public:
     GuiRadarView(GuiContainer* owner, string id, TargetsContainer* targets);
     GuiRadarView(GuiContainer* owner, string id, float distance, TargetsContainer* targets);
@@ -99,6 +102,7 @@ public:
     bool getAutoRotating() { return auto_rotate_on_my_ship; }
     GuiRadarView* setAutoRotating(bool value) { this->auto_rotate_on_my_ship = value; return this; }
     GuiRadarView* setCallbacks(bpfunc_t mouse_down_func, pfunc_t mouse_drag_func, pfunc_t mouse_up_func) { this->mouse_down_func = mouse_down_func; this->mouse_drag_func = mouse_drag_func; this->mouse_up_func = mouse_up_func; return this; }
+    GuiRadarView* setScrollCallback(sfunc_t mouse_wheel_func) { this->mouse_wheel_func = mouse_wheel_func; return this; }
     GuiRadarView* setViewPosition(glm::vec2 view_position) { this->view_position = view_position; return this; }
     glm::vec2 getViewPosition() { return view_position; }
     GuiRadarView* setViewRotation(float view_rotation) { this->view_rotation = view_rotation; return this; }
@@ -110,6 +114,7 @@ public:
     virtual bool onMouseDown(sp::io::Pointer::Button button, glm::vec2 position, sp::io::Pointer::ID id) override;
     virtual void onMouseDrag(glm::vec2 position, sp::io::Pointer::ID id) override;
     virtual void onMouseUp(glm::vec2 position, sp::io::Pointer::ID id) override;
+    virtual void onMouseWheelScroll(glm::vec2 position, float value) override;
 private:
     void updateGhostDots();
 

@@ -11,9 +11,11 @@
 #include "gui/gui2_button.h"
 #include "gui/gui2_togglebutton.h"
 
+#include "utils/rawScannerUtil.h"
+
 
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
-    : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background), locked_to_position(false), current_bearing(0.0f)
+    : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background), locked_to_position(false), current_bearing(0.0f), min_arc_size(10.0f), current_arc_size(360.0f), point_count(512)
 {
 
     auto container = new GuiElement(this, "");
@@ -86,26 +88,74 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     targets.setAllowWaypointSelection();
     radar = new GuiRadarView(radar_container, "SENSOR_RADAR", 50000.0f, &targets);
     radar->longRange()->enableWaypoints()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
-    radar->setAutoCentering(false);
+    radar->setAutoCentering(true);
     radar->setPosition(0, 0, sp::Alignment::TopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     radar->setCallbacks(
         [this](sp::io::Pointer::Button button, glm::vec2 position) { //down
+            if (button == sp::io::Pointer::Button::Left)
+            {
+                this->current_bearing = vec2ToAngle(position - this->radar->getViewPosition()) + 90;
+                if(this->current_bearing < 0)
+                    this->current_bearing += 360.0f;
+                this->sensor_bearing->setValue(this->current_bearing - 90.0f);
+                printf("Sensor bearing set to: %.2f\n", this->current_bearing);
+            }
         },
-        [this](glm::vec2 position) { //drag
+        [this](glm::vec2 position) {
+            this->current_bearing = vec2ToAngle(position - this->radar->getViewPosition()) + 90;
+            if(this->current_bearing < 0)
+                this->current_bearing += 360.0f;
+            this->sensor_bearing->setValue(this->current_bearing - 90.0f);
+            printf("Sensor bearing set to: %.2f\n", this->current_bearing);
         },
         [this](glm::vec2 position) { //up
         }
     );
+    radar->setScrollCallback([this](glm::vec2 position, float delta) { //scroll
+        this->current_arc_size += delta * 10.0f;
+        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f);
+        printf("Current arc size: %.2f\n", this->current_arc_size);
+    });
 
     // Setup the sensor container
-    biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH");
+    electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(255, 45, 84, 255));
+    electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    electrical_graph->showAxisZero(false)->setYlimit(0, 10);
+    
+    biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(65, 255, 81, 255));
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    biological_graph->showAxisZero(false)->setYlimit(0, 10);
+    
+    gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(70, 120, 255, 255));
+    gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+    gravity_graph->showAxisZero(false)->setYlimit(0, 10);
     
 }
 
 void SensorScreen::onDraw(sp::RenderTarget& renderer)
 {
+    std::vector<RawScannerDataPoint> scanner_data =
+        CalculateRawScannerData(this->radar->getViewPosition(),
+                                current_bearing - current_arc_size / 2.0f,
+                                current_arc_size,
+                                point_count,
+                                radar->getDistance() * 2);
 
+    // separate in three vectors
+    std::vector<float> electrical_points = std::vector<float>(point_count);
+    std::vector<float> biological_points = std::vector<float>(point_count);
+    std::vector<float> gravity_points = std::vector<float>(point_count);
+
+    for (size_t i = 0; i < point_count; i++)
+    {
+        electrical_points[i] = scanner_data[i].electrical;
+        biological_points[i] = scanner_data[i].biological;
+        gravity_points[i] = scanner_data[i].gravity;
+    }
+
+    electrical_graph->updateData(electrical_points);
+    biological_graph->updateData(biological_points);
+    gravity_graph->updateData(gravity_points);
 }
 
 void SensorScreen::onUpdate()

@@ -8,10 +8,11 @@
 
 #include "gui/gui2_progressbar.h"
 
-GuiGraph::GuiGraph(GuiContainer *owner, string id)
+GuiGraph::GuiGraph(GuiContainer *owner, string id, glm::u8vec4 color)
     : GuiElement(owner, id), auto_scale_y(true), show_axis_zero(true)
 {
-    data.resize(512);
+    this->color = color;
+    data = std::vector<float>(2, 0.0f);
 }
 
 void GuiGraph::updateData(std::vector<float> new_data)
@@ -29,21 +30,26 @@ void GuiGraph::updateData(std::vector<float> new_data)
 
 void GuiGraph::onDraw(sp::RenderTarget &renderer)
 {
-    for (int i = 0; i < data.size(); i++)
-    {
-        data[i] = sinf(0.05 * (float)i);
-    }
-
     // Find max
+
     float max = -std::numeric_limits<float>::infinity();
     float min = std::numeric_limits<float>::infinity();
-    for (int i = 0; i < data.size(); i++)
+    if(auto_scale_y)
     {
-        if (data[i] > max)
+        for (int i = 0; i < data.size(); i++)
+        {
+            if (data[i] > max)
             max = data[i];
-        if (data[i] < min)
+            if (data[i] < min)
             min = data[i];
+        }
     }
+    else
+    {
+        max = y_max;
+        min = y_min;
+    }
+
     float range = max - min;
 
     if (show_axis_zero)
@@ -65,5 +71,13 @@ void GuiGraph::onDraw(sp::RenderTarget &renderer)
             rect.position.x + rect.size.x * i / (float)data.size(),
             rect.position.y + rect.size.y - rect.size.y * ((data[i] - min) / range));
     }
-    renderer.drawLineBlendAdd(graph_points, glm::u8vec4(255, 45, 84, 255)); // red
+    renderer.drawLineBlendAdd(graph_points, this->color); // red
+}
+
+void GuiGraph::setYlimit(float min, float max)
+
+{
+    auto_scale_y = false;
+    y_min = min;
+    y_max = max;
 }
