@@ -43,7 +43,6 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     // For each data point ...
     for(int n = 0; n < point_count; n++)
     {
-        // ... divide them by 5 ...
         float r = scanner_data[n].electrical;
         float g = scanner_data[n].biological;
         float b = scanner_data[n].gravity;
