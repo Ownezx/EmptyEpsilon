@@ -30,10 +30,10 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     std::vector<float> angles(point_count);
     for (int i = 0; i < point_count; i++)
     {
-        angles[i] = 360.0F * float(i) / float(point_count);
+        angles[i] = 360.0f * float(i) / float(point_count);
     }
 
-    std::vector<RawScannerDataPoint> scanner_data = CalculateRawScannerData(view_position, angles, radius);
+    std::vector<RawScannerDataPoint> scanner_data = CalculateRawScannerData(view_position, angles, radar->getDistance() * 2);
 
     // Create a vertex array containing each data point.
     std::vector<glm::vec2> a_r;
@@ -43,18 +43,12 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     // For each data point ...
     for(int n = 0; n < point_count; n++)
     {
-        // ... set a baseline of 0 ...
-        float r = 0.0;
-        float g = 0.0;
-        float b = 0.0;
-
-        printf("Scanner data %f, %f, %f, at %f\n", r, g, b, angles[n]);
-
         // ... divide them by 5 ...
-        r = scanner_data[n].electrical / 5;
-        g = scanner_data[n].biological / 5;
-        b = scanner_data[n].gravity / 5;
-
+        float r = scanner_data[n].electrical / 5;
+        float g = scanner_data[n].biological / 5;
+        float b = scanner_data[n].gravity / 5;
+        
+        //printf("Scanner data %f, %f, %f, at %f\n", r, g, b, angles[n]);
         // ... and add vectors for each point.
         a_r.push_back(
             glm::vec2(rect.position.x + rect.size.x / 2.0f, rect.position.y + rect.size.y / 2.0f) +
