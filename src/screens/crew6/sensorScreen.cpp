@@ -17,7 +17,7 @@
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background), locked_to_position(false), current_bearing(0.0f), min_arc_size(10.0f), point_count(512)
 {
-    current_arc_size = 360.0f - 360.0f / point_count;
+    current_arc_size = 360.0f - 360.0f / (point_count - 1);
 
     auto container = new GuiElement(this, "");
     container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setAttribute("layout", "horizontal");
@@ -116,15 +116,15 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(255, 45, 84, 255));
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    electrical_graph->showAxisZero(false);
+    electrical_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
     
     biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(65, 255, 81, 255));
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    biological_graph->showAxisZero(false);
+    biological_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
     
     gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(70, 120, 255, 255));
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    gravity_graph->showAxisZero(false);    
+    gravity_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);   
 }
 
 void SensorScreen::onDraw(sp::RenderTarget& renderer)
@@ -133,7 +133,7 @@ void SensorScreen::onDraw(sp::RenderTarget& renderer)
     if (mouse_wheel_delta!=0)
     {
         this->current_arc_size += mouse_wheel_delta * 10.0f;
-        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f - 360.0f / this->point_count);
+        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f - 360.0f / (this->point_count + 1));
         printf("Current arc size: %.2f\n", this->current_arc_size);
     }
 

@@ -37,6 +37,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     start_angle = fmod(start_angle, 360.0f);
     arc_size = glm::clamp(arc_size, 0.0f, 360.0f - 360.0f / point_count);
 
+    
     // Initialize the data's amplitude along each of the three color bands.
     std::vector<RawScannerDataPoint> return_data_points(point_count);
 
@@ -75,8 +76,6 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         // Get object position
         float a_center = fmod(vec2ToAngle(transform.getPosition() - position), 180.0f);
 
-        // p is used for quadratic interpolation later
-        float p = 0;
         float a_diff;
 
         // This is used to activate the quadratic interpolation
@@ -84,6 +83,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         // Special case to use a different summing function if the object is very far
         float is_far = false;
         float is_far_additional_size = 0.0f;
+        // p is used for quadratic interpolation
+        float p = 0;
 
         // If we're adjacent to the object ...
         if (physics && dist <= physics->getSize().x)
@@ -95,15 +96,18 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         }
         else
         {
-            // Otherwise, measure the affected range of angles by the object's
-            // distance and radius.
+            // Exposed angular size of the object
             a_diff = glm::degrees(asinf((physics ? physics->getSize().x : 300.0f) / dist));
+            // If we are very fare we need to use a different summing function
+            // To make sure we see it on the radar
             if (a_diff < resolution /2 )
-                printf("is far");
+            {
                 is_far = true;
                 is_far_additional_size = 2 * resolution;
+            }
         }
 
+        // Changing origin to the start angle to make it easier to understand
         float transformed_target_center = fmod(a_center - start_angle, 360.0f);
         if (transformed_target_center < 0)
             transformed_target_center += 360.0f;
@@ -115,14 +119,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             transformed_target_stop_angle += 360.0f;
         float transformed_stop_angle = arc_size;
 
-        printf("Start angle: %f, arc size: %f\n", start_angle, arc_size);
-        printf("Target center: %f\n",a_center);
-        printf("Change in origin :\ntransformed_target_start_angle: %f,\ntransformed_target_stop_angle: %f,\n transformed_stop_angle: %f\n",
-               transformed_target_start_angle, transformed_target_stop_angle, transformed_stop_angle);
-        // For transform I need to do fmod(180 ) +180 <-------
 
-        // Using a change in origin to be at start_angle
-        // To make calculation simpler to read
+        // Find min an max angle from change of origin
         float max_angle = glm::min(
             transformed_target_stop_angle,
             transformed_stop_angle);
@@ -130,8 +128,6 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         float min_angle;
         if (transformed_target_start_angle > transformed_target_stop_angle)
         {
-            if (transformed_stop_angle < transformed_target_start_angle)
-                continue;
             min_angle = 0.0f; 
         }
         else
@@ -139,22 +135,13 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             min_angle = transformed_target_start_angle;
         }
         
-        // If the target angle is not within the arc size, skip it.
-        if (max_angle < min_angle )
-            continue;
 
         // Here we need to find where the angle starts to do the sum
         int target_start_angle_index = (int)ceil(min_angle  / resolution);
         int target_stop_angle_index = (int)floor(max_angle  / resolution);
 
-        printf("target_start_angle_index: %d, target_stop_angle_index: %d\n",
-            target_start_angle_index, target_stop_angle_index);
-        printf("Represented angles: %f - %f\n",
-            angles[target_start_angle_index % point_count],
-            angles[target_stop_angle_index % point_count]);
         for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
         {
-            //printf("Adding to point %d", i % point_count);
             float summing_function_value = 0;
             if (p == 0)
             {
@@ -167,16 +154,14 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             }
             else
             {
-                // If we intersect with it we do a quadratic interpolation with 1 depending on the closeness.
-                summing_function_value = sumFunction(angles[i % point_count] * (1 - p), transformed_target_center, M_PI) * p + 1 + p;
+                // If are in the object, we do a quadratic interpolation with 1 depending on the closeness.
+                summing_function_value = sumFunction(angles[i % point_count], transformed_target_center, a_diff) * p + 1 - p;
             }
 
-            // Now we do the first sum for things
             float g = signature.biological;
             float r = signature.electrical;
             float b = signature.gravity;
 
-            // Same with dynamic source
             if (dynamic_signature)
             {
                 g += dynamic_signature->biological;
@@ -199,9 +184,9 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         return_data_points[i].electrical = random(0, NOISE_FLOOR) + random(0, 60) * return_data_points[i].electrical;
         return_data_points[i].gravity = random(0, NOISE_FLOOR) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
 
-        // return_data_points[i].biological = 2 * (sqrtf(1 + return_data_points[i].biological) - 1);
-        // return_data_points[i].electrical = 2 * (sqrtf(1 + return_data_points[i].electrical) - 1);
-        // return_data_points[i].gravity = 2 * (sqrtf(1 + return_data_points[i].gravity) - 1);
+        return_data_points[i].biological = 2 * (sqrtf(1 + return_data_points[i].biological) - 1);
+        return_data_points[i].electrical = 2 * (sqrtf(1 + return_data_points[i].electrical) - 1);
+        return_data_points[i].gravity = 2 * (sqrtf(1 + return_data_points[i].gravity) - 1);
     }
 
     return return_data_points;
