@@ -112,32 +112,34 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         [this](glm::vec2 position) { //up
         }
     );
-    radar->setScrollCallback([this](glm::vec2 position, float delta) { //scroll
-        this->current_arc_size += delta * 10.0f;
-        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f - 360.0f / this->point_count);
-        printf("Current arc size: %.2f\n", this->current_arc_size);
-    });
 
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(255, 45, 84, 255));
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    electrical_graph->showAxisZero(false)->setYlimit(0, 15);
+    electrical_graph->showAxisZero(false);
     
     biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(65, 255, 81, 255));
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    biological_graph->showAxisZero(false)->setYlimit(0, 15);
+    biological_graph->showAxisZero(false);
     
     gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(70, 120, 255, 255));
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    gravity_graph->showAxisZero(false)->setYlimit(0, 15);
-    
+    gravity_graph->showAxisZero(false);    
 }
 
 void SensorScreen::onDraw(sp::RenderTarget& renderer)
 {
+    float mouse_wheel_delta = keys.zoom_in.getValue() - keys.zoom_out.getValue();
+    if (mouse_wheel_delta!=0)
+    {
+        this->current_arc_size += mouse_wheel_delta * 10.0f;
+        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f - 360.0f / this->point_count);
+        printf("Current arc size: %.2f\n", this->current_arc_size);
+    }
+
     std::vector<RawScannerDataPoint> scanner_data =
         CalculateRawScannerData(this->radar->getViewPosition(),
-                                current_bearing - current_arc_size / 2.0f,
+                                current_bearing - current_arc_size / 2.0f - 90.0f,
                                 current_arc_size,
                                 point_count,
                                 radar->getDistance() * 2);
@@ -162,9 +164,4 @@ void SensorScreen::onDraw(sp::RenderTarget& renderer)
 void SensorScreen::onUpdate()
 {
    
-}
-
-void SensorScreen::setSensorBearing(float bearing)
-{
-
 }
