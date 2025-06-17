@@ -15,8 +15,9 @@
 
 
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
-    : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background), locked_to_position(false), current_bearing(0.0f), min_arc_size(10.0f), current_arc_size(360.0f), point_count(512)
+    : GuiOverlay(owner, "SCIENCE_SCREEN", colorConfig.background), locked_to_position(false), current_bearing(0.0f), min_arc_size(10.0f), point_count(512)
 {
+    current_arc_size = 360.0f - 360.0f / point_count;
 
     auto container = new GuiElement(this, "");
     container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setAttribute("layout", "horizontal");
@@ -113,22 +114,22 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     );
     radar->setScrollCallback([this](glm::vec2 position, float delta) { //scroll
         this->current_arc_size += delta * 10.0f;
-        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f);
+        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f - 360.0f / this->point_count);
         printf("Current arc size: %.2f\n", this->current_arc_size);
     });
 
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(255, 45, 84, 255));
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    electrical_graph->showAxisZero(false)->setYlimit(0, 10);
+    electrical_graph->showAxisZero(false)->setYlimit(0, 15);
     
     biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(65, 255, 81, 255));
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    biological_graph->showAxisZero(false)->setYlimit(0, 10);
+    biological_graph->showAxisZero(false)->setYlimit(0, 15);
     
     gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(70, 120, 255, 255));
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    gravity_graph->showAxisZero(false)->setYlimit(0, 10);
+    gravity_graph->showAxisZero(false)->setYlimit(0, 15);
     
 }
 
