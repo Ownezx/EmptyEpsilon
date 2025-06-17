@@ -68,7 +68,7 @@ void GuiGraph::onDraw(sp::RenderTarget &renderer)
     for (int i = 0; i < data.size(); i++)
     {
         graph_points[i] = glm::vec2(
-            rect.position.x + rect.size.x * i / (float)data.size(),
+            rect.position.x + rect.size.x -  rect.size.x * i / (float)data.size(),
             rect.position.y + rect.size.y - rect.size.y * ((data[i] - min) / range));
     }
     renderer.drawLineBlendAdd(graph_points, this->color); // red

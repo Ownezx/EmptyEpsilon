@@ -30,10 +30,13 @@ float farSumFunction(float angle, float target_angle, float target_angle_width, 
 
 std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, float start_angle, float arc_size, uint point_count, float range)
 {
-
+    // Sanitize the input parameters.
     if (start_angle<0)
         start_angle += 360.0f;
-        
+    
+    start_angle = glm::clamp(start_angle, 0.0f, 360.0f);
+    arc_size = glm::clamp(arc_size, 0.0f, 360.0f - 360.0f / point_count);
+
     // Initialize the data's amplitude along each of the three color bands.
     std::vector<RawScannerDataPoint> return_data_points(point_count);
 
@@ -118,11 +121,11 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
                 target_stop_angle_index = point_count - 1;
         }
 
-        // printf("Indexes: %d to %d\n", target_start_angle_index, target_stop_angle_index);
+        //printf("Indexes: %d to %d, max effective %d\n", target_start_angle_index, target_stop_angle_index, target_stop_angle_index % point_count);
         // Now add the value to all relevant point
         for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
         {
-            // printf("Adding to point %d, corresponding to angle %f\n", i, angles[i % point_count]);
+            //printf("Adding to point %d", i % point_count);
             float summing_function_value = 0;
             if (p == 0)
             {
@@ -152,9 +155,9 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
                 b += dynamic_signature->gravity;
             }
 
-            return_data_points[i].biological += g * summing_function_value * scale;
-            return_data_points[i].electrical += r * summing_function_value * scale;
-            return_data_points[i].gravity += b * summing_function_value * scale;
+            return_data_points[i % point_count].biological += g * summing_function_value * scale;
+            return_data_points[i % point_count].electrical += r * summing_function_value * scale;
+            return_data_points[i % point_count].gravity += b * summing_function_value * scale;
         }
     }
 
