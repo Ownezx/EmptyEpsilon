@@ -34,7 +34,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     if (start_angle<0)
         start_angle += 360.0f;
     
-    start_angle = glm::clamp(start_angle, 0.0f, 360.0f);
+    start_angle = fmod(start_angle, 360.0f);
     arc_size = glm::clamp(arc_size, 0.0f, 360.0f - 360.0f / point_count);
 
     // Initialize the data's amplitude along each of the three color bands.
@@ -47,13 +47,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     for (int i = 0; i < point_count; i++)
     {
         // Here we do not want to wrap around as the sum function needs it to not wrap around.
-        angles[i] = start_angle + i * resolution;
+        angles[i] = fmodf(start_angle + i * resolution, 360.0f);
     }
-    
-    bool arc_loops_on_itself = false;
-    if (arc_size == 360 - resolution)
-        arc_loops_on_itself = true;
-
 
     // For each SpaceObject ...
     for (auto [entity, signature, dynamic_signature, transform] : sp::ecs::Query<RawRadarSignatureInfo, sp::ecs::optional<DynamicRadarSignatureInfo>, sp::Transform>())
@@ -72,57 +67,91 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
 
         float scale = 1.0;
         // The further away the object is, the less its effect on radar data.
-        if (dist > range)
-            scale = 1.0f - ((dist - range) / range);
+        if (dist > range/2)
+            scale = 1.0f - 2 * ((dist - range / 2) / range);
 
         auto physics = entity.getComponent<sp::Physics>();
 
         // Get object position
-        float a_center = vec2ToAngle(transform.getPosition() - position);
+        float a_center = fmod(vec2ToAngle(transform.getPosition() - position), 180.0f);
 
         // p is used for quadratic interpolation later
         float p = 0;
         float a_diff;
+
+        // This is used to activate the quadratic interpolation
+        bool is_close = false;
+        // Special case to use a different summing function if the object is very far
+        float is_far = false;
+        float is_far_additional_size = 0.0f;
 
         // If we're adjacent to the object ...
         if (physics && dist <= physics->getSize().x)
         {
             p = dist / physics->getSize().x;
             p *= p;
-            a_diff = M_PI;
+            a_diff = M_PI / 2.0f;
+            is_close = true;
         }
         else
         {
             // Otherwise, measure the affected range of angles by the object's
             // distance and radius.
             a_diff = glm::degrees(asinf((physics ? physics->getSize().x : 300.0f) / dist));
+            if (a_diff < resolution /2 )
+                printf("is far");
+                is_far = true;
+                is_far_additional_size = 2 * resolution;
         }
+
+        float transformed_target_center = fmod(a_center - start_angle, 360.0f);
+        if (transformed_target_center < 0)
+            transformed_target_center += 360.0f;
+        float transformed_target_start_angle = fmod(a_center - a_diff - is_far_additional_size - start_angle, 360.0f);
+        if (transformed_target_start_angle < 0)
+            transformed_target_start_angle += 360.0f;
+        float transformed_target_stop_angle = fmod(a_center + a_diff + is_far_additional_size - start_angle, 360.0f);
+        if (transformed_target_stop_angle < 0)
+            transformed_target_stop_angle += 360.0f;
+        float transformed_stop_angle = arc_size;
+
+        printf("Start angle: %f, arc size: %f\n", start_angle, arc_size);
+        printf("Target center: %f\n",a_center);
+        printf("Change in origin :\ntransformed_target_start_angle: %f,\ntransformed_target_stop_angle: %f,\n transformed_stop_angle: %f\n",
+               transformed_target_start_angle, transformed_target_stop_angle, transformed_stop_angle);
+        // For transform I need to do fmod(180 ) +180 <-------
+
+        // Using a change in origin to be at start_angle
+        // To make calculation simpler to read
+        float max_angle = glm::min(
+            transformed_target_stop_angle,
+            transformed_stop_angle);
+        
+        float min_angle;
+        if (transformed_target_start_angle > transformed_target_stop_angle)
+        {
+            if (transformed_stop_angle < transformed_target_start_angle)
+                continue;
+            min_angle = 0.0f; 
+        }
+        else
+        {
+            min_angle = transformed_target_start_angle;
+        }
+        
+        // If the target angle is not within the arc size, skip it.
+        if (max_angle < min_angle )
+            continue;
 
         // Here we need to find where the angle starts to do the sum
-        int target_start_angle_index = (int) ceil(((a_center - a_diff) - start_angle) / resolution);
-        int target_stop_angle_index = (int) ceil(((a_center + a_diff) - start_angle) / resolution);
+        int target_start_angle_index = (int)ceil(min_angle  / resolution);
+        int target_stop_angle_index = (int)floor(max_angle  / resolution);
 
-        // Special case to use a different summing function if the object is very far
-        bool is_far = false;
-        if (target_stop_angle_index - target_start_angle_index <= 3)
-            is_far = true;
-
-        // Handle the cases where the the arc loops on itself.
-        if (!arc_loops_on_itself)
-        {
-            // If the start angle is negative, we need to wrap it around
-            if (target_start_angle_index < 0)
-            {
-                target_start_angle_index += point_count;
-                target_stop_angle_index += point_count;
-            }
-            // Prevent overflow
-            if (target_stop_angle_index >= point_count)
-                target_stop_angle_index = point_count - 1;
-        }
-
-        //printf("Indexes: %d to %d, max effective %d\n", target_start_angle_index, target_stop_angle_index, target_stop_angle_index % point_count);
-        // Now add the value to all relevant point
+        printf("target_start_angle_index: %d, target_stop_angle_index: %d\n",
+            target_start_angle_index, target_stop_angle_index);
+        printf("Represented angles: %f - %f\n",
+            angles[target_start_angle_index % point_count],
+            angles[target_stop_angle_index % point_count]);
         for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
         {
             //printf("Adding to point %d", i % point_count);
@@ -139,7 +168,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             else
             {
                 // If we intersect with it we do a quadratic interpolation with 1 depending on the closeness.
-                summing_function_value = sumFunction(angles[i % point_count], a_center, M_PI) * p + 1 + p;
+                summing_function_value = sumFunction(angles[i % point_count] * (1 - p), transformed_target_center, M_PI) * p + 1 + p;
             }
 
             // Now we do the first sum for things
@@ -170,9 +199,9 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         return_data_points[i].electrical = random(0, NOISE_FLOOR) + random(0, 60) * return_data_points[i].electrical;
         return_data_points[i].gravity = random(0, NOISE_FLOOR) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
 
-        return_data_points[i].biological = 2 * (sqrtf(1 + return_data_points[i].biological) - 1);
-        return_data_points[i].electrical = 2 * (sqrtf(1 + return_data_points[i].electrical) - 1);
-        return_data_points[i].gravity = 2 * (sqrtf(1 + return_data_points[i].gravity) - 1);
+        // return_data_points[i].biological = 2 * (sqrtf(1 + return_data_points[i].biological) - 1);
+        // return_data_points[i].electrical = 2 * (sqrtf(1 + return_data_points[i].electrical) - 1);
+        // return_data_points[i].gravity = 2 * (sqrtf(1 + return_data_points[i].gravity) - 1);
     }
 
     return return_data_points;

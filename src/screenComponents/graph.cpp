@@ -81,3 +81,9 @@ void GuiGraph::setYlimit(float min, float max)
     y_min = min;
     y_max = max;
 }
+
+void GuiGraph::onMouseDrag(glm::vec2 position, sp::io::Pointer::ID id)
+{
+    if (on_drag_callback)
+        on_drag_callback(position);
+}
