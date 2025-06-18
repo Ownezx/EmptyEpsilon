@@ -6,7 +6,6 @@
 #include "playerInfo.h"
 
 
-class GuiRotationDial;
 class GuiRadarView;
 class GuiGraph;
 
@@ -22,10 +21,12 @@ protected:
 
     int point_count;
 
+    float target_map_zoom;
+    
+    void updateMapZoom(float delta);
 public:
     SensorScreen(GuiContainer* owner, CrewPosition crew_position=CrewPosition::scienceOfficer);
 
-    GuiRotationDial* sensor_bearing;
     GuiRadarView* radar;
     GuiGraph* electrical_graph;
     GuiGraph* biological_graph;
