@@ -12,6 +12,8 @@
 
 #include "utils/rawScannerUtil.h"
 
+
+
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     : GuiOverlay(owner, "SCIENCE_SCREEN",
       colorConfig.background),
@@ -71,13 +73,28 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
             this->target_map_zoom = 10000.0f; });
     toggle_map_button->setValue(true)->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [](bool value) {});
+    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [this](bool value) {
+        if (value)
+            this->radar->enableBiological();
+        else
+            this->radar->disableBiological();
+    });
     biological_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [](bool value) {});
+    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [this](bool value) {
+        if (value)
+            this->radar->enableElectrical();
+        else
+            this->radar->disableElectrical();
+    });
     electrical_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [](bool value) {});
+    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [this](bool value) {
+        if (value)
+            this->radar->enableGravity();
+        else
+            this->radar->disableGravity();
+    });
     gravity_button->setSize(GuiElement::GuiSizeMax, 50);
 
     // Setup the radar container
@@ -85,6 +102,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     radar = new GuiRadarView(radar_container, "SENSOR_RADAR", 50000.0f, &targets);
     radar->longRange()->enableWaypoints()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
     radar->setAutoCentering(true)->enableRadarScanArc();
+    radar->enableSignatures();
     radar->setPosition(0, 0, sp::Alignment::TopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     radar->setCallbacks(
         [this](sp::io::Pointer::Button button, glm::vec2 position) { // down
@@ -101,15 +119,15 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         });
 
     // Setup the sensor container
-    electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(255, 45, 84, 255));
+    electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     electrical_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
 
-    biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(65, 255, 81, 255));
+    biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_biological_signal);
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     biological_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
 
-    gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", glm::u8vec4(70, 120, 255, 255));
+    gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_gravity_signal);
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     gravity_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
 }

@@ -76,10 +76,12 @@ template<typename T, int PRIO, int FLAGS> RenderRadarInterface<T, PRIO, FLAGS>::
 class BasicRadarRendering :
     public sp::ecs::System,
     public RenderRadarInterface<RadarTrace, 50, RadarRenderSystem::FlagNone>,
+    public RenderRadarInterface<RawRadarSignatureInfo, 21, RadarRenderSystem::FlagNone>,
     public RenderRadarInterface<CallSign, 100, RadarRenderSystem::FlagNone> {
 public:
     void update(float delta) override {}
 
     void renderOnRadar(sp::RenderTarget& renderer, sp::ecs::Entity e, glm::vec2 screen_position, float scale, float rotation, RadarTrace& component) override;
+    void renderOnRadar(sp::RenderTarget& renderer, sp::ecs::Entity e, glm::vec2 screen_position, float scale, float rotation, RawRadarSignatureInfo& component) override;
     void renderOnRadar(sp::RenderTarget& renderer, sp::ecs::Entity e, glm::vec2 screen_position, float scale, float rotation, CallSign& component) override;
 };

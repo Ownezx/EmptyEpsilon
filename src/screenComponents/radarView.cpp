@@ -70,7 +70,11 @@ GuiRadarView::GuiRadarView(GuiContainer* owner, string id, TargetsContainer* tar
     fog_style(NoFogOfWar),
     mouse_down_func(nullptr),
     mouse_drag_func(nullptr),
-    mouse_up_func(nullptr)
+    mouse_up_func(nullptr),
+    show_signatures(true),
+    show_biological(true),
+    show_gravity(true),
+    show_electrical(true)
 {
 }
 
@@ -99,7 +103,11 @@ GuiRadarView::GuiRadarView(GuiContainer* owner, string id, float distance, Targe
     fog_style(NoFogOfWar),
     mouse_down_func(nullptr),
     mouse_drag_func(nullptr),
-    mouse_up_func(nullptr)
+    mouse_up_func(nullptr),
+    show_signatures(true),
+    show_biological(true),
+    show_gravity(true),
+    show_electrical(true)
 {
 }
 
@@ -803,7 +811,7 @@ void GuiRadarView::drawRadarScanArc(sp::RenderTarget& renderer)
         radar_scan_bearing - radar_scan_arc/ 2.0f - 90.0f,
         radar_scan_arc,
         fmin(rect.size.x, rect.size.y) / 2 - 20,
-        glm::u8vec4(255, 255, 255, 100));
+        glm::u8vec4(255, 255, 255, 50));
 }
 
 glm::vec2 GuiRadarView::worldToScreen(glm::vec2 world_position)

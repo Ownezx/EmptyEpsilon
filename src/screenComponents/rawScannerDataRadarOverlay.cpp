@@ -65,7 +65,7 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     a_b.push_back(a_b.front());
 
     // Draw each band as a line.
-    renderer.drawLineBlendAdd(a_r, glm::u8vec4(255, 45, 84, 255)); // red
-    renderer.drawLineBlendAdd(a_g, glm::u8vec4(65, 255, 81, 255)); // green
-    renderer.drawLineBlendAdd(a_b, glm::u8vec4(70, 120, 255, 255)); // blue
+    renderer.drawLineBlendAdd(a_r, colorConfig.overlay_electrical_signal); // red
+    renderer.drawLineBlendAdd(a_g, colorConfig.overlay_biological_signal); // green
+    renderer.drawLineBlendAdd(a_b, colorConfig.overlay_gravity_signal);   // blue
 }
