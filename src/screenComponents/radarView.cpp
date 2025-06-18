@@ -25,6 +25,8 @@
 #include "missileTubeControls.h"
 #include "targetsContainer.h"
 
+#include "systems/beamweapon.h"
+
 namespace
 {
     enum class RadarStencil : uint8_t
@@ -61,6 +63,7 @@ GuiRadarView::GuiRadarView(GuiContainer* owner, string id, TargetsContainer* tar
     show_callsigns(false),
     show_heading_indicators(false),
     show_game_master_data(false),
+    show_radar_scan_arc(false),
     range_indicator_step_size(0.0f),
     background_alpha(255),
     style(Circular),
@@ -89,6 +92,7 @@ GuiRadarView::GuiRadarView(GuiContainer* owner, string id, float distance, Targe
     show_callsigns(false),
     show_heading_indicators(false),
     show_game_master_data(false),
+    show_radar_scan_arc(false),
     range_indicator_step_size(0.0f),
     background_alpha(255),
     style(Circular),
@@ -232,6 +236,8 @@ void GuiRadarView::onDraw(sp::RenderTarget& renderer)
     if (show_heading_indicators)
         drawHeadingIndicators(renderer);
     drawTargets(renderer);
+    if (show_radar_scan_arc)
+        drawRadarScanArc(renderer);
 
     if (style == Rectangular && transform)
     {
@@ -781,6 +787,23 @@ void GuiRadarView::drawHeadingIndicators(sp::RenderTarget& renderer)
             radar_screen_center + vec2FromAngle(float(n) - 90 - view_rotation) * (scale - 50), n-view_rotation,
             string(n), 15.0f, main_font, {255, 255, 255, 255});
     }
+}
+
+void GuiRadarView::drawRadarScanArc(sp::RenderTarget& renderer)
+{
+    if (!my_spaceship)
+        return;
+
+    auto lrr = my_spaceship.getComponent<LongRangeRadar>();
+    if (!lrr)
+        return;
+
+    drawArc(renderer,
+        getCenterPoint(),
+        radar_scan_bearing - radar_scan_arc/ 2.0f - 90.0f,
+        radar_scan_arc,
+        fmin(rect.size.x, rect.size.y) / 2 - 20,
+        glm::u8vec4(255, 255, 255, 100));
 }
 
 glm::vec2 GuiRadarView::worldToScreen(glm::vec2 world_position)

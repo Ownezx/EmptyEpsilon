@@ -13,8 +13,6 @@ class GuiGraph;
 class SensorScreen : public GuiOverlay
 {
 protected:
-    float current_bearing;
-    float current_arc_size;
     float min_arc_size;
     bool locked_to_position;
     void setSensorBearing(float bearing);
