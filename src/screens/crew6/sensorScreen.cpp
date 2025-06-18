@@ -4,8 +4,6 @@
 
 #include "components/radar.h"
 
-#include "systems/beamweapon.h"
-
 #include "screenComponents/radarView.h"
 #include "screenComponents/graph.h"
 
@@ -18,13 +16,10 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     : GuiOverlay(owner, "SCIENCE_SCREEN",
       colorConfig.background),
       locked_to_position(false),
-      current_bearing(0.0f),
       min_arc_size(10.0f),
       point_count(512),
       target_map_zoom(50000.f)
 {
-    current_arc_size = 360.0f - 360.0f / (point_count - 1);
-
     auto container = new GuiElement(this, "");
     container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setAttribute("layout", "horizontal");
 
@@ -89,7 +84,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     targets.setAllowWaypointSelection();
     radar = new GuiRadarView(radar_container, "SENSOR_RADAR", 50000.0f, &targets);
     radar->longRange()->enableWaypoints()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
-    radar->setAutoCentering(true);
+    radar->setAutoCentering(true)->enableRadarScanArc();
     radar->setPosition(0, 0, sp::Alignment::TopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     radar->setCallbacks(
         [this](sp::io::Pointer::Button button, glm::vec2 position) { // down
@@ -124,15 +119,16 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     float mouse_wheel_delta = keys.zoom_in.getValue() - keys.zoom_out.getValue();
     if (mouse_wheel_delta != 0)
     {
-        this->current_arc_size += mouse_wheel_delta * 10.0f;
-        this->current_arc_size = glm::clamp(this->current_arc_size, this->min_arc_size, 360.0f - 360.0f / (this->point_count + 1));
-        printf("Current arc size: %.2f\n", this->current_arc_size);
+        float temp = radar->getRadarScanArc() + mouse_wheel_delta * 10.0f;
+        temp = glm::clamp(temp, min_arc_size, 360.0f);
+        radar->setRadarScanArc(temp);
+
     }
 
     std::vector<RawScannerDataPoint> scanner_data =
         CalculateRawScannerData(this->radar->getViewPosition(),
-                                current_bearing - current_arc_size / 2.0f - 90.0f,
-                                current_arc_size,
+                                radar->getRadarScanBearing() - radar->getRadarScanArc() / 2.0f - 90.0f,
+                                radar->getRadarScanArc(),
                                 point_count,
                                 radar->getDistance() * 2);
 
@@ -152,13 +148,6 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     biological_graph->updateData(biological_points);
     gravity_graph->updateData(gravity_points);
 
-    drawArc(renderer,
-            radar->getCenterPoint(),
-            current_bearing - current_arc_size / 2.0f - 90.0f,
-            current_arc_size,
-            fmin(radar->getRect().size.x, radar->getRect().size.y) / 2 + 20,
-            glm::u8vec4(255, 255, 255, 100));
-
     // TODO: use a time since last frame variable
     // this is frame dependent...
     updateMapZoom(0.1);
@@ -166,9 +155,10 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
 
 void SensorScreen::setSensorBearing(float bearing)
 {
-    this->current_bearing = bearing;
-    if (this->current_bearing < 0)
-        this->current_bearing += 360.0f;
+    if (bearing< 0)
+        bearing += 360.0f;
+
+    radar->setRadarScanBearing(bearing);
 }
 
 void SensorScreen::updateMapZoom(float delta)
