@@ -6,8 +6,6 @@
 #include "components/collision.h"
 #include <cmath>
 
-#define NOISE_FLOOR 1
-
 float sumFunction(float angle, float target_angle, float target_angle_width)
 {
     float temp = (target_angle - angle) / target_angle_width;
@@ -28,7 +26,7 @@ float farSumFunction(float angle, float target_angle, float target_angle_width, 
 
 }
 
-std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, float start_angle, float arc_size, uint point_count, float range)
+std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, float start_angle, float arc_size, uint point_count, float range, float noise_floor)
 {
     // Sanitize the input parameters.
     if (start_angle<0)
@@ -180,9 +178,9 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     for (int i = 0; i < point_count; i++)
     {
 
-        return_data_points[i].biological = random(0, NOISE_FLOOR) + return_data_points[i].biological * 40;
-        return_data_points[i].electrical = random(0, NOISE_FLOOR) + random(0, 60) * return_data_points[i].electrical;
-        return_data_points[i].gravity = random(0, NOISE_FLOOR) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
+        return_data_points[i].biological = random(0, noise_floor) + return_data_points[i].biological * 40;
+        return_data_points[i].electrical = random(0, noise_floor) + random(0, 60) * return_data_points[i].electrical;
+        return_data_points[i].gravity = random(0, noise_floor) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
 
         return_data_points[i].biological = 2 * (sqrtf(1 + return_data_points[i].biological) - 1);
         return_data_points[i].electrical = 2 * (sqrtf(1 + return_data_points[i].electrical) - 1);
@@ -192,7 +190,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     return return_data_points;
 }
 
-std::vector<RawScannerDataPoint> Calculate360RawScannerData(glm::vec2 position, uint point_count, float range)
+std::vector<RawScannerDataPoint> Calculate360RawScannerData(glm::vec2 position, uint point_count, float range, float noise_floor)
 {
-    return CalculateRawScannerData(position, 0, 360 - 360 / float(point_count), point_count, range);
+    return CalculateRawScannerData(position, 0, 360 - 360 / float(point_count), point_count, range, noise_floor);
 }

@@ -130,7 +130,8 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
                                 radar->getRadarScanBearing() - radar->getRadarScanArc() / 2.0f - 90.0f,
                                 radar->getRadarScanArc(),
                                 point_count,
-                                radar->getDistance() * 2);
+                                radar->getDistance() * 2,
+                                radar->getNoiseFloor());
 
     // separate in three vectors
     std::vector<float> electrical_points = std::vector<float>(point_count);
