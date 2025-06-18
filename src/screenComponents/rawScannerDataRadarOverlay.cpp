@@ -30,7 +30,8 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     std::vector<RawScannerDataPoint> scanner_data =
         Calculate360RawScannerData(view_position,
                                    point_count,
-                                   radar->getDistance() * 2);
+                                   radar->getDistance() * 2,
+                                   radar->getNoiseFloor());
 
     // Create a vertex array containing each data point.
     std::vector<glm::vec2> a_r;

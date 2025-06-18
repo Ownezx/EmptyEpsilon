@@ -97,6 +97,7 @@ public:
     float getRadarScanArc() { return radar_scan_arc; }
     GuiRadarView* setRadarScanBearing(float bearing) { radar_scan_bearing = bearing; return this; }
     float getRadarScanBearing() { return radar_scan_bearing; }
+    float getNoiseFloor();
     bool getCallsigns() { return show_callsigns; }
     GuiRadarView* enableHeadingIndicators() { show_heading_indicators = true; return this; }
     GuiRadarView* disableHeadingIndicators() { show_heading_indicators = false; return this; }
