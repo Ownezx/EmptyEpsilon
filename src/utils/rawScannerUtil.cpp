@@ -178,13 +178,24 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     for (int i = 0; i < point_count; i++)
     {
 
-        return_data_points[i].biological = random(0, noise_floor) + return_data_points[i].biological * 40;
-        return_data_points[i].electrical = random(0, noise_floor) + random(0, 60) * return_data_points[i].electrical;
-        return_data_points[i].gravity = random(0, noise_floor) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
+        return_data_points[i].biological = random(-noise_floor, noise_floor) + return_data_points[i].biological * 40;
+        return_data_points[i].electrical = random(-noise_floor, noise_floor) + random(0, 60) * return_data_points[i].electrical;
+        return_data_points[i].gravity = random(-noise_floor, noise_floor) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
 
-        return_data_points[i].biological = 2 * (sqrtf(1 + return_data_points[i].biological) - 1);
-        return_data_points[i].electrical = 2 * (sqrtf(1 + return_data_points[i].electrical) - 1);
-        return_data_points[i].gravity = 2 * (sqrtf(1 + return_data_points[i].gravity) - 1);
+        if (return_data_points[i].biological > 0)
+            return_data_points[i].biological = sqrt(1 + return_data_points[i].biological) - 1;
+        else
+            return_data_points[i].biological = -(sqrt(1 - return_data_points[i].biological) - 1);
+
+        if (return_data_points[i].electrical > 0)
+            return_data_points[i].electrical = sqrt(1 + return_data_points[i].electrical) - 1;
+        else
+            return_data_points[i].electrical = -(sqrt(1 - return_data_points[i].electrical) - 1);
+
+        if (return_data_points[i].gravity > 0)
+            return_data_points[i].gravity = sqrt(1 + return_data_points[i].gravity) - 1;
+        else
+            return_data_points[i].gravity = -(sqrt(1 - return_data_points[i].gravity) - 1);
     }
 
     return return_data_points;

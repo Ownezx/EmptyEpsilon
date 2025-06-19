@@ -6,6 +6,7 @@
 
 #include "screenComponents/radarView.h"
 #include "screenComponents/graph.h"
+#include "screenComponents/graphLabel.h"
 
 #include "gui/gui2_button.h"
 #include "gui/gui2_togglebutton.h"
@@ -40,13 +41,15 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     // Sensor graph
     auto sensor_container = new GuiElement(left_container, "");
     sensor_container->setSize(GuiElement::GuiSizeMax, 150);
+    graph_label =  new GuiGraphLabel(left_container, "");
+    graph_label->setSize(GuiElement::GuiSizeMax, 60);
+    graph_label->setMajorTickSize(20)->setMinorTickNumber(1)->setDisplayLabelText(true);
+    graph_label->setModulo(360.0f);
 
     // radar or time sensor bottom
+    // Try to encapsulate this in a gui element to do an overlay!
     auto radar_container = new GuiElement(left_container, "");
     radar_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-
-    auto time_sensor_container = new GuiElement(left_container, "");
-    time_sensor_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax)->setVisible(false)->setAttribute("layout", "vertical");
 
     auto lock_button = new GuiToggleButton(right_container, "SENSOR_LOCK_POSITION", tr("SensorButton", "Lock Position"), [this](bool value)
                                            { this->locked_to_position = value; });
@@ -121,15 +124,15 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    electrical_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
+    electrical_graph->showAxisZero(false);
 
     biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_biological_signal);
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    biological_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
+    biological_graph->showAxisZero(false);
 
     gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_gravity_signal);
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    gravity_graph->showAxisZero(false)->setYlimit(-5.0f, 15.0f);
+    gravity_graph->showAxisZero(false);
 }
 
 void SensorScreen::onDraw(sp::RenderTarget &renderer)
@@ -139,6 +142,25 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     {
         float temp = radar->getRadarScanArc() + mouse_wheel_delta * 10.0f;
         temp = glm::clamp(temp, min_arc_size, 360.0f);
+        if(temp > 200){
+            graph_label->setMajorTickSize(20);
+            graph_label->setMinorTickNumber(1);
+        }
+        else if(temp > 100)
+        {
+            graph_label->setMajorTickSize(10);
+            graph_label->setMinorTickNumber(1);
+        }
+        else if(temp > 10)
+        {
+            graph_label->setMajorTickSize(5);
+            graph_label->setMinorTickNumber(4);
+        }
+        else
+        {
+            graph_label->setMajorTickSize(1);
+            graph_label->setMinorTickNumber(0);
+        }
         radar->setRadarScanArc(temp);
 
     }
@@ -163,6 +185,8 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
         gravity_points[i] = scanner_data[i].gravity;
     }
 
+    graph_label->setStart(radar->getRadarScanBearing() - radar->getRadarScanArc() / 2.0f);
+    graph_label->setStop(radar->getRadarScanBearing() + radar->getRadarScanArc() / 2.0f);
     electrical_graph->updateData(electrical_points);
     biological_graph->updateData(biological_points);
     gravity_graph->updateData(gravity_points);

@@ -308,6 +308,7 @@ set(MAIN_SOURCES
     src/screenComponents/openCommsButton.cpp
     src/screenComponents/combatManeuver.cpp
     src/screenComponents/graph.cpp
+    src/screenComponents/graphLabel.cpp
     src/screenComponents/rotatingModelView.cpp
     src/screenComponents/shipDestroyedPopup.cpp
     src/screenComponents/warpControls.cpp
