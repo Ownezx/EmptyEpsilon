@@ -8,7 +8,7 @@
 
 class GuiRadarView;
 class GuiGraph;
-
+class GuiGraphLabel;
 
 class SensorScreen : public GuiOverlay
 {
@@ -29,6 +29,7 @@ public:
     GuiGraph* electrical_graph;
     GuiGraph* biological_graph;
     GuiGraph* gravity_graph;
+    GuiGraphLabel* graph_label;
     TargetsContainer targets;
 
 
