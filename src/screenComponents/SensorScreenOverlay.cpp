@@ -1,4 +1,4 @@
-#include "SensorScreenOverlay.h"
+#include "sensorScreenOverlay.h"
 #include "radarView.h"
 #include "components/radar.h"
 #include "systems/beamweapon.h"
@@ -6,10 +6,11 @@
 #include <vector>    // For std::vector
 
 SensorScreenOverlay::SensorScreenOverlay(GuiRadarView *owner, string id)
-    : GuiElement(owner, id), bearing(0.0f), arc(360.0f), radar(owner)
+    : GuiElement(owner, id), bearing(0.0f), arc(360.0f), radar(owner), target_lock(true)
 {
     setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     marker_list = std::vector<Marker>();
+    current_target = radar->getViewPosition() + glm::vec2(10000.0f,0.0f); 
 }
 
 void SensorScreenOverlay::addMarker()
@@ -39,14 +40,36 @@ void SensorScreenOverlay::clearMarkers()
     marker_list.clear();
 }
 
+void SensorScreenOverlay::setCurrentTarget(glm::vec2 screen_position)
+{
+    current_target = screen_position;
+    bearing = vec2ToAngle(screen_position - radar->getViewPosition()) + 90.0f;
+    if (bearing < 0)
+        bearing += 360.0f;
+
+}
+
 void SensorScreenOverlay::onDraw(sp::RenderTarget &renderer)
 {
     drawArc(renderer,
-            getCenterPoint(),
-            bearing - arc / 2.0f - 90.0f,
-            arc,
-            fmin(rect.size.x, rect.size.y) / 2 - 20,
-            glm::u8vec4(255, 255, 255, 50));
+        getCenterPoint(),
+        bearing - arc / 2.0f - 90.0f,
+        glm::clamp(arc, 0.0f, 359.0f),
+        fmin(rect.size.x, rect.size.y) / 2 - 20,
+        glm::u8vec4(255, 255, 255, 50));
+        
+    if(target_lock)
+    {
+        renderer.drawSprite("reticule.png",
+            radar->worldToScreen(current_target) - glm::vec2(0, 10),
+            20,
+            glm::u8vec4(255, 255, 255, 255));
+                
+
+        bearing = vec2ToAngle(current_target - radar->getViewPosition()) + 90.0f;
+        if (bearing < 0)
+            bearing += 360.0f;
+    }
 
     // This assumes the overlay is perfectly on the map.
     auto top_left = radar->screenToWorld(rect.position);
