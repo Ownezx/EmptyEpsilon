@@ -31,38 +31,31 @@ void SensorScreenOverlay::onDraw(sp::RenderTarget& renderer)
     // This assumes the overlay is perfectly on the map.
     auto top_left = radar->screenToWorld(rect.position);
     auto bottom_right = radar->screenToWorld(rect.position + rect.size);
+    
+
     for (Marker marker : marker_list)
-    {
-        // This is the result of solving the geometrical problem of the
-        // intersection between rectangle and line
-        float x_min = (bottom_right.y + marker.position.y) / tan(glm::radians(marker.bearing + 90.0f)) - marker.position.x;
-        float x_max = (top_left.y + marker.position.y) / tan(glm::radians(marker.bearing + 90.0f)) - marker.position.x;
-        x_min = std::clamp(x_min, top_left.x, bottom_right.x);
-        x_max = std::clamp(x_max, top_left.x, bottom_right.x);
-
-        if(x_min < x_max)
-        {
-            auto temp = x_min;
-            x_min = x_max;
-            x_max = temp;
-        }
+    {    
+        auto bearing_rad = glm::radians(marker.bearing + 90.0f);
+        bearing_rad = bearing_rad - (2 * M_PI) * floor(bearing_rad / (2 * M_PI));
+        glm::vec2 direction = - glm::vec2(cosf(bearing_rad), sinf(bearing_rad));
         
-        if (x_min != x_max)
-        {
-            if( marker.bearing > 180.0f)
-                x_min = marker.position.x;
-            else
-                x_max = marker.position.x;
+        auto screen_corner_bearing = 0.5f * atanf( (bottom_right.x - marker.position.x) / (bottom_right.y - marker.position.y));
+        
+        printf("%f, %f\n", bearing_rad,screen_corner_bearing);
+        float distance;
+        if (fmodf(bearing_rad, M_PI) > screen_corner_bearing && fmodf(bearing_rad, M_PI) < M_PI - screen_corner_bearing)
+            distance = abs(0.5f * (top_left.y - bottom_right.y) / sinf(bearing_rad));
+        else
+            distance = abs(0.5f * (top_left.x - bottom_right.x) / cosf(bearing_rad));
 
-            std::vector<glm::vec2> points =
-            {
-                radar->worldToScreen(glm::vec2(x_min, (x_min + marker.position.x) * tan(glm::radians(marker.bearing + 90.0f)) - marker.position.y)),
-                radar->worldToScreen(glm::vec2(x_max, (x_max + marker.position.x) * tan(glm::radians(marker.bearing + 90.0f)) - marker.position.y)),
-            };
-            renderer.drawLineBlendAdd(
-                points,
-                glm::u8vec4(255, 255, 255, 50)
-            );
-        }
+        std::vector<glm::vec2> points =
+        {
+            radar->worldToScreen(marker.position),
+            radar->worldToScreen(marker.position + direction * distance),
+        };
+        renderer.drawLineBlendAdd(
+            points,
+            glm::u8vec4(255, 255, 255, 50)
+        );
     }
 }
