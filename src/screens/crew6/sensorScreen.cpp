@@ -135,15 +135,15 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    electrical_graph->showAxisZero(false);
+    electrical_graph->showAxisZero(true)->setYlimit(-10.0f, 10.0f);
 
     biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_biological_signal);
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    biological_graph->showAxisZero(false);
+    biological_graph->showAxisZero(false)->setYlimit(-10.0f, 10.0f);
 
     gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_gravity_signal);
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    gravity_graph->showAxisZero(false);
+    gravity_graph->showAxisZero(false)->setYlimit(-10.0f, 10.0f);
 }
 
 void SensorScreen::onDraw(sp::RenderTarget &renderer)
@@ -206,6 +206,15 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     electrical_graph->updateData(electrical_points);
     biological_graph->updateData(biological_points);
     gravity_graph->updateData(gravity_points);
+    
+    // Drawing center mark behind graph
+    std::vector<glm::vec2> test =
+    {
+        electrical_graph->getCenterPoint() - glm::vec2(0.0f,150.0f / 2.0f),
+        electrical_graph->getCenterPoint() + glm::vec2(0.0f,150.0f / 2.0f),
+    };
+
+    renderer.drawLineBlendAdd(test, glm::u8vec4(255,255,255,100));
 
     // TODO: use a time since last frame variable
     // this is frame dependent...

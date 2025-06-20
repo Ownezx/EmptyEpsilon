@@ -7,8 +7,13 @@
 
 float sumFunction(float angle, float target_angle, float target_angle_width)
 {
-    float temp = (target_angle - angle) / target_angle_width;
-    return 1 - temp * temp ;
+    // Calculate the minimum unsigned angle difference
+    float angle_diff = fmod(fabs(angle - target_angle), 360.0f);
+    if (angle_diff > 180.0f)
+        angle_diff = 360.0f - angle_diff;
+
+    float temp = angle_diff / target_angle_width;
+    return 1 - temp * temp;
 }
 
 float farSumFunction(float angle, float target_angle, float target_angle_width, float resolution)
@@ -45,7 +50,9 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     for (int i = 0; i < point_count; i++)
     {
         // Here we do not want to wrap around as the sum function needs it to not wrap around.
-        angles[i] = fmodf(start_angle + i * resolution, 360.0f);
+        angles[i] = fmod(start_angle + i * resolution, 360.0f);
+        if (angles[i] < 0.0f)
+            angles[i] += 360.0f;
     }
 
     // For each SpaceObject ...
@@ -71,7 +78,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         auto physics = entity.getComponent<sp::Physics>();
 
         // Get object position
-        float a_center = fmod(vec2ToAngle(transform.getPosition() - position), 180.0f);
+        float a_center = vec2ToAngle(transform.getPosition() - position);
 
         float a_diff;
 
