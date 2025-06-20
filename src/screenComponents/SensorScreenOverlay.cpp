@@ -19,6 +19,26 @@ void SensorScreenOverlay::addMarker()
     marker_list.push_back(Marker{vector, bearing});
 }
 
+void SensorScreenOverlay::removePreviousMarker()
+{
+    if(marker_list.size() > 0)
+    {
+        marker_list.pop_back();
+    }
+}
+void SensorScreenOverlay::removeOldestMarker()
+{
+    if(marker_list.size() > 0)
+    {
+    marker_list.erase(marker_list.begin());
+    }
+}
+
+void SensorScreenOverlay::clearMarkers()
+{
+    marker_list.clear();
+}
+
 void SensorScreenOverlay::onDraw(sp::RenderTarget& renderer)
 {
     drawArc(renderer,
@@ -43,10 +63,16 @@ void SensorScreenOverlay::onDraw(sp::RenderTarget& renderer)
         
         printf("%f, %f\n", bearing_rad,screen_corner_bearing);
         float distance;
-        if (fmodf(bearing_rad, M_PI) > screen_corner_bearing && fmodf(bearing_rad, M_PI) < M_PI - screen_corner_bearing)
-            distance = abs(0.5f * (top_left.y - bottom_right.y) / sinf(bearing_rad));
+        if (bearing_rad < screen_corner_bearing)
+            distance = abs((marker.position.y - top_left.y) / sinf(bearing_rad));
+        if (bearing_rad < M_PI - screen_corner_bearing)
+            distance = abs((top_left.y - marker.position.y) / sinf(bearing_rad));
+        else if (bearing_rad < M_PI + screen_corner_bearing)
+            distance = abs((bottom_right.x - marker.position.x) / cosf(bearing_rad));
+        else if (bearing_rad < 2 * M_PI - screen_corner_bearing)
+            distance = abs((bottom_right.y - marker.position.y) / sinf(bearing_rad));
         else
-            distance = abs(0.5f * (top_left.x - bottom_right.x) / cosf(bearing_rad));
+            distance = abs((marker.position.y - top_left.y) / sinf(bearing_rad));
 
         std::vector<glm::vec2> points =
         {
