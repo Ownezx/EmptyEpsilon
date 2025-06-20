@@ -837,8 +837,3 @@ void GuiRadarView::onMouseUp(glm::vec2 position, sp::io::Pointer::ID id)
     if (mouse_up_func)
         mouse_up_func(screenToWorld(position));
 }
-
-float GuiRadarView::getNoiseFloor()
-{
-    return my_spaceship ? my_spaceship.getComponent<LongRangeRadar>()->raw_radar_noise_floor : 1.0f; 
-}

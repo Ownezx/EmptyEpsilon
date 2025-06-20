@@ -23,6 +23,8 @@ public:
     void setArc(float value) { arc = value; }
     float getArc() const { return arc; }
 
+    void setTargetLock(bool value) {target_lock = value;}
+
     void setCurrentTarget(glm::vec2 screen_position);
     glm::vec2 getCurrentTarget() const { return current_target; }
 
