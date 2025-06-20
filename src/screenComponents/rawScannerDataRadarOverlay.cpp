@@ -27,11 +27,14 @@ void RawScannerDataRadarOverlay::onDraw(sp::RenderTarget& renderer)
     const int point_count = 512;
     float radius = std::min(rect.size.x, rect.size.y) / 2.0f;
 
+    auto lrr = my_spaceship.getComponent<LongRangeRadar>();
+    if(!lrr)
+        return; 
     std::vector<RawScannerDataPoint> scanner_data =
         Calculate360RawScannerData(view_position,
                                    point_count,
-                                   radar->getDistance() * 2,
-                                   radar->getNoiseFloor());
+                                   lrr->raw_radar_range,
+                                   lrr->raw_radar_noise_floor);
 
     // Create a vertex array containing each data point.
     std::vector<glm::vec2> a_r;

@@ -6,7 +6,7 @@
 #include <vector>    // For std::vector
 
 SensorScreenOverlay::SensorScreenOverlay(GuiRadarView *owner, string id)
-    : GuiElement(owner, id), bearing(0.0f), arc(360.0f), radar(owner), target_lock(true)
+    : GuiElement(owner, id), bearing(0.0f), arc(360.0f), radar(owner), target_lock(false)
 {
     setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     marker_list = std::vector<Marker>();
@@ -60,10 +60,15 @@ void SensorScreenOverlay::onDraw(sp::RenderTarget &renderer)
         
     if(target_lock)
     {
-        renderer.drawSprite("reticule.png",
-            radar->worldToScreen(current_target) - glm::vec2(0, 10),
-            20,
-            glm::u8vec4(255, 255, 255, 255));
+        // TODO: Crop
+        auto screen_pos = radar->worldToScreen(current_target);
+        if(rect.contains(screen_pos))
+        {
+            renderer.drawSprite("redicule.png",
+                screen_pos,
+                40,
+                glm::u8vec4(255, 255, 255, 255));
+        }
                 
 
         bearing = vec2ToAngle(current_target - radar->getViewPosition()) + 90.0f;

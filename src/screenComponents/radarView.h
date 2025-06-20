@@ -92,7 +92,6 @@ public:
     GuiRadarView* enableCallsigns() { show_callsigns = true; return this; }
     GuiRadarView* disableCallsigns() { show_callsigns = false; return this; }
     GuiRadarView* showCallsigns(bool value) { show_callsigns = value; return this; }
-    float getNoiseFloor();
     bool getCallsigns() { return show_callsigns; }
     GuiRadarView* enableHeadingIndicators() { show_heading_indicators = true; return this; }
     GuiRadarView* disableHeadingIndicators() { show_heading_indicators = false; return this; }

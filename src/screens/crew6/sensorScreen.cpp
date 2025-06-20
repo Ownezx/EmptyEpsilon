@@ -2,6 +2,7 @@
 #include "i18n.h"
 #include "math.h"
 
+
 #include "components/radar.h"
 
 #include "screenComponents/radarView.h"
@@ -17,7 +18,6 @@
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     : GuiOverlay(owner, "SCIENCE_SCREEN",
                  colorConfig.background),
-      locked_to_position(false),
       min_arc_size(10.0f),
       point_count(512),
       target_map_zoom(50000.f)
@@ -54,7 +54,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     fill_element->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
 
     auto lock_button = new GuiToggleButton(right_container, "SENSOR_LOCK_POSITION", tr("SensorButton", "Lock Position"), [this](bool value)
-                                           { this->locked_to_position = value; });
+                                           { this->scan_overlay->setTargetLock(value);});
     lock_button->setSize(GuiElement::GuiSizeMax, 50);
 
     auto mark_bearing_button = new GuiButton(right_container, "SENSOR_MARK_BEARING", tr("SensorButton", "Mark Bearing"), [this]()
@@ -176,13 +176,18 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
         scan_overlay->setArc(temp);
     }
 
+    if (!my_spaceship)
+        return;
+    auto lrr = my_spaceship.getComponent<LongRangeRadar>();
+    if(!lrr)
+        return; 
     std::vector<RawScannerDataPoint> scanner_data =
         CalculateRawScannerData(this->radar->getViewPosition(),
                                 scan_overlay->getBearing() - scan_overlay->getArc() / 2.0f - 90.0f,
                                 scan_overlay->getArc(),
                                 point_count,
-                                radar->getDistance() * 2, // TODO: use the raw data
-                                radar->getNoiseFloor());
+                                lrr->raw_radar_range,
+                                lrr->raw_radar_noise_floor);
 
     // separate in three vectors
     std::vector<float> electrical_points = std::vector<float>(point_count);

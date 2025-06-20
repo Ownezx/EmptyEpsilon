@@ -15,7 +15,6 @@ class SensorScreen : public GuiOverlay
 {
 protected:
     float min_arc_size;
-    bool locked_to_position;
     void setSensorTarget(glm::vec2 bearing);
 
     int point_count;
