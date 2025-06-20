@@ -50,6 +50,9 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     auto radar_container = new GuiElement(left_container, "");
     radar_container->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
 
+    auto fill_element = new GuiElement(right_container, "");
+    fill_element->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
+
     auto lock_button = new GuiToggleButton(right_container, "SENSOR_LOCK_POSITION", tr("SensorButton", "Lock Position"), [this](bool value)
                                            { this->locked_to_position = value; });
     lock_button->setSize(GuiElement::GuiSizeMax, 50);
@@ -117,12 +120,12 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         [this](sp::io::Pointer::Button button, glm::vec2 position) { // down
             if (button == sp::io::Pointer::Button::Left)
             {
-                setSensorBearing(vec2ToAngle(position - this->radar->getViewPosition()) + 90);
+                setSensorTarget(position);
             }
         },
         [this](glm::vec2 position)
         {
-            setSensorBearing(vec2ToAngle(position - this->radar->getViewPosition()) + 90);
+            setSensorTarget(position);
         },
         [this](glm::vec2 position) { // up
         });
@@ -150,12 +153,12 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     {
         float temp = scan_overlay->getArc() + mouse_wheel_delta * 10.0f;
         temp = glm::clamp(temp, min_arc_size, 360.0f);
-        if (temp > 200)
+        if (temp > 150)
         {
             graph_label->setMajorTickSize(20);
             graph_label->setMinorTickNumber(1);
         }
-        else if (temp > 100)
+        else if (temp > 70)
         {
             graph_label->setMajorTickSize(10);
             graph_label->setMinorTickNumber(1);
@@ -204,12 +207,9 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     updateMapZoom(0.1);
 }
 
-void SensorScreen::setSensorBearing(float bearing)
+void SensorScreen::setSensorTarget(glm::vec2 position)
 {
-    if (bearing < 0)
-        bearing += 360.0f;
-
-    scan_overlay->setBearing(bearing);
+    scan_overlay->setCurrentTarget(position);
 }
 
 void SensorScreen::updateMapZoom(float delta)

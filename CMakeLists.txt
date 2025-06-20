@@ -302,7 +302,7 @@ set(MAIN_SOURCES
     src/screenComponents/beamFrequencySelector.cpp
     src/screenComponents/radarView.cpp
     src/screenComponents/rawScannerDataRadarOverlay.cpp
-    src/screenComponents/SensorScreenOverlay.cpp
+    src/screenComponents/sensorScreenOverlay.cpp
     src/screenComponents/scanTargetButton.cpp
     src/screenComponents/snapSlider.cpp
     src/screenComponents/indicatorOverlays.cpp

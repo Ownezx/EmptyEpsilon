@@ -23,6 +23,9 @@ public:
     void setArc(float value) { arc = value; }
     float getArc() const { return arc; }
 
+    void setCurrentTarget(glm::vec2 screen_position);
+    glm::vec2 getCurrentTarget() const { return current_target; }
+
     virtual void onDraw(sp::RenderTarget &target) override;
 
 protected:
@@ -32,6 +35,9 @@ protected:
         float bearing;
     };
     std::vector<Marker> marker_list;
+
+    bool target_lock;
+    glm::vec2 current_target;
 
     float bearing;
     float arc;
