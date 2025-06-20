@@ -9,6 +9,7 @@
 class GuiRadarView;
 class GuiGraph;
 class GuiGraphLabel;
+class SensorScreenOverlay;
 
 class SensorScreen : public GuiOverlay
 {
@@ -31,6 +32,7 @@ public:
     GuiGraph* gravity_graph;
     GuiGraphLabel* graph_label;
     TargetsContainer targets;
+    SensorScreenOverlay* scan_overlay;
 
 
     virtual void onDraw(sp::RenderTarget& target) override;

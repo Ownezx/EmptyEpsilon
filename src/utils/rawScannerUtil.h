@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "glm/vec2.hpp"
+#include <cmath>
 
 struct RawScannerDataPoint
 {

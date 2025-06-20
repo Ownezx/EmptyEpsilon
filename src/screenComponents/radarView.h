@@ -58,13 +58,10 @@ private:
     bool show_missile_tubes;
     bool show_callsigns;
     bool show_heading_indicators;
-    bool show_radar_scan_arc;
     bool show_signatures;
     bool show_electrical;
     bool show_gravity;
     bool show_biological;
-    float radar_scan_bearing = 0.0f;
-    float radar_scan_arc = 360.0f;
     bool show_game_master_data;
     float range_indicator_step_size;
     uint8_t background_alpha;
@@ -95,12 +92,6 @@ public:
     GuiRadarView* enableCallsigns() { show_callsigns = true; return this; }
     GuiRadarView* disableCallsigns() { show_callsigns = false; return this; }
     GuiRadarView* showCallsigns(bool value) { show_callsigns = value; return this; }
-    GuiRadarView* enableRadarScanArc() { show_radar_scan_arc = true; return this; }
-    GuiRadarView* disableRadarScanArc() { show_radar_scan_arc = false; return this; }
-    GuiRadarView* setRadarScanArc(float arc) { radar_scan_arc = arc; return this; }
-    float getRadarScanArc() { return radar_scan_arc; }
-    GuiRadarView* setRadarScanBearing(float bearing) { radar_scan_bearing = bearing; return this; }
-    float getRadarScanBearing() { return radar_scan_bearing; }
     float getNoiseFloor();
     bool getCallsigns() { return show_callsigns; }
     GuiRadarView* enableHeadingIndicators() { show_heading_indicators = true; return this; }
@@ -155,7 +146,6 @@ private:
     void drawObjectsGM(sp::RenderTarget& target);
     void drawTargets(sp::RenderTarget& target);
     void drawHeadingIndicators(sp::RenderTarget& target);
-    void drawRadarScanArc(sp::RenderTarget& target);
 };
 
 #endif//RADAR_VIEW_H

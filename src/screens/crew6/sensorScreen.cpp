@@ -7,6 +7,7 @@
 #include "screenComponents/radarView.h"
 #include "screenComponents/graph.h"
 #include "screenComponents/graphLabel.h"
+#include "screenComponents/SensorScreenOverlay.h"
 
 #include "gui/gui2_button.h"
 #include "gui/gui2_togglebutton.h"
@@ -55,7 +56,9 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
                                            { this->locked_to_position = value; });
     lock_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto mark_bearing_button = new GuiButton(right_container, "SENSOR_MARK_BEARING", tr("SensorButton", "Mark Bearing"), []() {});
+    auto mark_bearing_button = new GuiButton(right_container, "SENSOR_MARK_BEARING", tr("SensorButton", "Mark Bearing"), [this]() {
+        this->scan_overlay->addMarker();
+    });
     mark_bearing_button->setSize(GuiElement::GuiSizeMax, 50);
 
     auto remove_oldest_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_OLDEST_MARK", tr("SensorButton", "Remove Oldest Mark"), []() {});
@@ -104,7 +107,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     targets.setAllowWaypointSelection();
     radar = new GuiRadarView(radar_container, "SENSOR_RADAR", 50000.0f, &targets);
     radar->longRange()->enableWaypoints()->enableCallsigns()->setStyle(GuiRadarView::Rectangular)->setFogOfWarStyle(GuiRadarView::FriendlysShortRangeFogOfWar);
-    radar->setAutoCentering(true)->enableRadarScanArc();
+    radar->setAutoCentering(true);
     radar->enableSignatures();
     radar->setPosition(0, 0, sp::Alignment::TopLeft)->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
     radar->setCallbacks(
@@ -120,6 +123,8 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         },
         [this](glm::vec2 position) { // up
         });
+
+    scan_overlay = new SensorScreenOverlay(radar,"");
 
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);
@@ -140,7 +145,7 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     float mouse_wheel_delta = keys.zoom_in.getValue() - keys.zoom_out.getValue();
     if (mouse_wheel_delta != 0)
     {
-        float temp = radar->getRadarScanArc() + mouse_wheel_delta * 10.0f;
+        float temp = scan_overlay->getArc() + mouse_wheel_delta * 10.0f;
         temp = glm::clamp(temp, min_arc_size, 360.0f);
         if(temp > 200){
             graph_label->setMajorTickSize(20);
@@ -161,16 +166,16 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
             graph_label->setMajorTickSize(1);
             graph_label->setMinorTickNumber(0);
         }
-        radar->setRadarScanArc(temp);
+        scan_overlay->setArc(temp);
 
     }
 
     std::vector<RawScannerDataPoint> scanner_data =
         CalculateRawScannerData(this->radar->getViewPosition(),
-                                radar->getRadarScanBearing() - radar->getRadarScanArc() / 2.0f - 90.0f,
-                                radar->getRadarScanArc(),
+                                scan_overlay->getBearing() - scan_overlay->getArc() / 2.0f - 90.0f,
+                                scan_overlay->getArc(),
                                 point_count,
-                                radar->getDistance() * 2,
+                                radar->getDistance() * 2, // TODO: use the raw data
                                 radar->getNoiseFloor());
 
     // separate in three vectors
@@ -185,8 +190,8 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
         gravity_points[i] = scanner_data[i].gravity;
     }
 
-    graph_label->setStart(radar->getRadarScanBearing() - radar->getRadarScanArc() / 2.0f);
-    graph_label->setStop(radar->getRadarScanBearing() + radar->getRadarScanArc() / 2.0f);
+    graph_label->setStart(scan_overlay->getBearing() - scan_overlay->getArc() / 2.0f);
+    graph_label->setStop(scan_overlay->getBearing() + scan_overlay->getArc() / 2.0f);
     electrical_graph->updateData(electrical_points);
     biological_graph->updateData(biological_points);
     gravity_graph->updateData(gravity_points);
@@ -201,7 +206,7 @@ void SensorScreen::setSensorBearing(float bearing)
     if (bearing< 0)
         bearing += 360.0f;
 
-    radar->setRadarScanBearing(bearing);
+    scan_overlay->setBearing(bearing);
 }
 
 void SensorScreen::updateMapZoom(float delta)

@@ -4,7 +4,6 @@
 #include "playerInfo.h"
 #include "random.h"
 #include "components/collision.h"
-#include <cmath>
 
 float sumFunction(float angle, float target_angle, float target_angle_width)
 {
