@@ -14,11 +14,9 @@
 
 #include "utils/rawScannerUtil.h"
 
-
-
 SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     : GuiOverlay(owner, "SCIENCE_SCREEN",
-      colorConfig.background),
+                 colorConfig.background),
       locked_to_position(false),
       min_arc_size(10.0f),
       point_count(512),
@@ -42,7 +40,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     // Sensor graph
     auto sensor_container = new GuiElement(left_container, "");
     sensor_container->setSize(GuiElement::GuiSizeMax, 150);
-    graph_label =  new GuiGraphLabel(left_container, "");
+    graph_label = new GuiGraphLabel(left_container, "");
     graph_label->setSize(GuiElement::GuiSizeMax, 60);
     graph_label->setMajorTickSize(20)->setMinorTickNumber(1)->setDisplayLabelText(true);
     graph_label->setModulo(360.0f);
@@ -56,24 +54,20 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
                                            { this->locked_to_position = value; });
     lock_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto mark_bearing_button = new GuiButton(right_container, "SENSOR_MARK_BEARING", tr("SensorButton", "Mark Bearing"), [this]() {
-        this->scan_overlay->addMarker();
-    });
+    auto mark_bearing_button = new GuiButton(right_container, "SENSOR_MARK_BEARING", tr("SensorButton", "Mark Bearing"), [this]()
+                                             { this->scan_overlay->addMarker(); });
     mark_bearing_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto remove_last_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_LAST_MARK", tr("SensorButton", "Remove Last Mark"), [this]() {
-        this->scan_overlay->removePreviousMarker();
-    });
+    auto remove_last_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_LAST_MARK", tr("SensorButton", "Remove Last Mark"), [this]()
+                                                 { this->scan_overlay->removePreviousMarker(); });
     remove_last_mark_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto remove_oldest_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_OLDEST_MARK", tr("SensorButton", "Remove Oldest Mark"), [this]() {
-        this->scan_overlay->removeOldestMarker();
-    });
+    auto remove_oldest_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_OLDEST_MARK", tr("SensorButton", "Remove Oldest Mark"), [this]()
+                                                   { this->scan_overlay->removeOldestMarker(); });
     remove_oldest_mark_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto reset_marks_button = new GuiButton(right_container, "SENSOR_RESET_MARKS", tr("SensorButton", "Reset Marks"), [this]() {
-        this->scan_overlay->clearMarkers();
-    });
+    auto reset_marks_button = new GuiButton(right_container, "SENSOR_RESET_MARKS", tr("SensorButton", "Reset Marks"), [this]()
+                                            { this->scan_overlay->clearMarkers(); });
     reset_marks_button->setSize(GuiElement::GuiSizeMax, 50);
 
     auto link_probe_button = new GuiToggleButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), [](bool value) {});
@@ -88,28 +82,28 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
             this->target_map_zoom = 10000.0f; });
     toggle_map_button->setValue(true)->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [this](bool value) {
+    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [this](bool value)
+                                                 {
         if (value)
             this->radar->enableBiological();
         else
-            this->radar->disableBiological();
-    });
+            this->radar->disableBiological(); });
     biological_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [this](bool value) {
+    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [this](bool value)
+                                                 {
         if (value)
             this->radar->enableElectrical();
         else
-            this->radar->disableElectrical();
-    });
+            this->radar->disableElectrical(); });
     electrical_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [this](bool value) {
+    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [this](bool value)
+                                              {
         if (value)
             this->radar->enableGravity();
         else
-            this->radar->disableGravity();
-    });
+            this->radar->disableGravity(); });
     gravity_button->setSize(GuiElement::GuiSizeMax, 50);
 
     // Setup the radar container
@@ -133,7 +127,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         [this](glm::vec2 position) { // up
         });
 
-    scan_overlay = new SensorScreenOverlay(radar,"");
+    scan_overlay = new SensorScreenOverlay(radar, "");
 
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);
@@ -156,16 +150,17 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     {
         float temp = scan_overlay->getArc() + mouse_wheel_delta * 10.0f;
         temp = glm::clamp(temp, min_arc_size, 360.0f);
-        if(temp > 200){
+        if (temp > 200)
+        {
             graph_label->setMajorTickSize(20);
             graph_label->setMinorTickNumber(1);
         }
-        else if(temp > 100)
+        else if (temp > 100)
         {
             graph_label->setMajorTickSize(10);
             graph_label->setMinorTickNumber(1);
         }
-        else if(temp > 10)
+        else if (temp > 10)
         {
             graph_label->setMajorTickSize(5);
             graph_label->setMinorTickNumber(4);
@@ -176,7 +171,6 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
             graph_label->setMinorTickNumber(0);
         }
         scan_overlay->setArc(temp);
-
     }
 
     std::vector<RawScannerDataPoint> scanner_data =
@@ -212,7 +206,7 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
 
 void SensorScreen::setSensorBearing(float bearing)
 {
-    if (bearing< 0)
+    if (bearing < 0)
         bearing += 360.0f;
 
     scan_overlay->setBearing(bearing);

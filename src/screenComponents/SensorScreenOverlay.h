@@ -10,7 +10,7 @@ class GuiRadarView;
 class SensorScreenOverlay : public GuiElement
 {
 public:
-    SensorScreenOverlay(GuiRadarView* owner, string id);
+    SensorScreenOverlay(GuiRadarView *owner, string id);
 
     void addMarker();
     void removePreviousMarker();
@@ -23,18 +23,19 @@ public:
     void setArc(float value) { arc = value; }
     float getArc() const { return arc; }
 
-    virtual void onDraw(sp::RenderTarget& target) override;
+    virtual void onDraw(sp::RenderTarget &target) override;
 
 protected:
-    struct Marker {
+    struct Marker
+    {
         glm::vec2 position;
         float bearing;
     };
     std::vector<Marker> marker_list;
-    
+
     float bearing;
     float arc;
-    GuiRadarView* radar;
+    GuiRadarView *radar;
 };
 
-#endif//RAW_SCANNER_DATA_RADAR_OVERLAY_H
+#endif // RAW_SCANNER_DATA_RADAR_OVERLAY_H
