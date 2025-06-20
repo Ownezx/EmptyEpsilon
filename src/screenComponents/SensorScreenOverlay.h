@@ -13,8 +13,8 @@ public:
     SensorScreenOverlay(GuiRadarView* owner, string id);
 
     void addMarker();
-    void removeLastMarker();
     void removePreviousMarker();
+    void removeOldestMarker();
     void clearMarkers();
 
     void setBearing(float value) { bearing = value; }

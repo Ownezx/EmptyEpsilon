@@ -61,10 +61,19 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     });
     mark_bearing_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto remove_oldest_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_OLDEST_MARK", tr("SensorButton", "Remove Oldest Mark"), []() {});
+    auto remove_last_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_LAST_MARK", tr("SensorButton", "Remove Last Mark"), [this]() {
+        this->scan_overlay->removePreviousMarker();
+    });
+    remove_last_mark_button->setSize(GuiElement::GuiSizeMax, 50);
+
+    auto remove_oldest_mark_button = new GuiButton(right_container, "SENSOR_REMOVE_OLDEST_MARK", tr("SensorButton", "Remove Oldest Mark"), [this]() {
+        this->scan_overlay->removeOldestMarker();
+    });
     remove_oldest_mark_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto reset_marks_button = new GuiButton(right_container, "SENSOR_RESET_MARKS", tr("SensorButton", "Reset Marks"), []() {});
+    auto reset_marks_button = new GuiButton(right_container, "SENSOR_RESET_MARKS", tr("SensorButton", "Reset Marks"), [this]() {
+        this->scan_overlay->clearMarkers();
+    });
     reset_marks_button->setSize(GuiElement::GuiSizeMax, 50);
 
     auto link_probe_button = new GuiToggleButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), [](bool value) {});
