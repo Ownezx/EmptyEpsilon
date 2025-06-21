@@ -1,6 +1,7 @@
 #include "rawScannerUtil.h"
 #include "ecs/query.h"
 #include "components/radar.h"
+#include "components/radarblock.h"
 #include "playerInfo.h"
 #include "random.h"
 #include "components/collision.h"
@@ -70,44 +71,53 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         if (dist > range)
             continue;
 
-        float scale = 1.0;
-        // The further away the object is, the less its effect on radar data.
-        if (dist > range/2)
-            scale = 1.0f - 2 * ((dist - range / 2) / range);
 
-        auto physics = entity.getComponent<sp::Physics>();
+        // This is used to activate the quadratic interpolation
+        bool is_close = false;
+        float scale = 1.0;
+
+        float size = GetEntityRadarTraceSize(entity);
+        printf("Size %f, dist %f\n", size, dist);
+        if (size > dist)
+        {
+            scale = 1.0f;
+            is_close = true;
+        }
+        else
+        {
+            // if we are out of the object, we want to
+            // have a linear interpolation to the range
+            scale = 1 - (dist - size) / (range - size);
+        }
 
         // Get object position
         float a_center = vec2ToAngle(transform.getPosition() - position);
 
         float a_diff;
 
-        // This is used to activate the quadratic interpolation
-        bool is_close = false;
         // Special case to use a different summing function if the object is very far
         float is_far = false;
-        float is_far_additional_size = 0.0f;
-        // p is used for quadratic interpolation
+        // p is used for interpolation
         float p = 0;
 
-        // If we're adjacent to the object ...
-        if (physics && dist <= physics->getSize().x)
+        // Calculate the angle of the object
+        if (is_close)
         {
-            p = dist / physics->getSize().x;
-            p *= p;
-            a_diff = M_PI / 2.0f;
-            is_close = true;
+            p = 1 - dist / size;
+            // p *= p;
+            // interpolation
+            a_diff = M_PI + M_PI * p * p;
         }
         else
         {
             // Exposed angular size of the object
-            a_diff = glm::degrees(asinf((physics ? physics->getSize().x : 300.0f) / dist));
+            a_diff = glm::degrees(asinf(size / dist));
             // If we are very fare we need to use a different summing function
             // To make sure we see it on the radar
             if (a_diff < resolution /2 )
             {
                 is_far = true;
-                is_far_additional_size = 2 * resolution;
+                a_diff += 2 * resolution;
             }
         }
 
@@ -115,10 +125,10 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         float transformed_target_center = fmod(a_center - start_angle, 360.0f);
         if (transformed_target_center < 0)
             transformed_target_center += 360.0f;
-        float transformed_target_start_angle = fmod(a_center - a_diff - is_far_additional_size - start_angle, 360.0f);
+        float transformed_target_start_angle = fmod(a_center - a_diff - start_angle, 360.0f);
         if (transformed_target_start_angle < 0)
             transformed_target_start_angle += 360.0f;
-        float transformed_target_stop_angle = fmod(a_center + a_diff + is_far_additional_size - start_angle, 360.0f);
+        float transformed_target_stop_angle = fmod(a_center + a_diff - start_angle, 360.0f);
         if (transformed_target_stop_angle < 0)
             transformed_target_stop_angle += 360.0f;
         float transformed_stop_angle = arc_size;
@@ -159,7 +169,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             else
             {
                 // If are in the object, we do a quadratic interpolation with 1 depending on the closeness.
-                summing_function_value = sumFunction(angles[i % point_count], transformed_target_center, a_diff) * p + 1 - p;
+                summing_function_value = sumFunction(angles[i % point_count], a_center, a_diff) * (1 - p)  + p;
             }
 
             float g = signature.biological;
@@ -185,7 +195,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     {
 
         return_data_points[i].biological = random(-noise_floor, noise_floor) + return_data_points[i].biological * 40;
-        return_data_points[i].electrical = random(-noise_floor, noise_floor) + random(0, 60) * return_data_points[i].electrical;
+        return_data_points[i].electrical = random(-noise_floor, noise_floor) + random(-20, 40) * return_data_points[i].electrical;
         return_data_points[i].gravity = random(-noise_floor, noise_floor) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
 
         if (return_data_points[i].biological > 0)
@@ -210,4 +220,24 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
 std::vector<RawScannerDataPoint> Calculate360RawScannerData(glm::vec2 position, uint point_count, float range, float noise_floor)
 {
     return CalculateRawScannerData(position, 0, 360 - 360 / float(point_count), point_count, range, noise_floor);
+}
+
+float GetEntityRadarTraceSize(sp::ecs::Entity entity)
+{
+    float size;
+    auto signature = entity.getComponent<RawRadarSignatureInfo>();
+    if (signature && signature->size != 0)
+        return signature->size;
+
+    // Fallback to physics entity
+    auto physics = entity.getComponent<sp::Physics>();
+    if(physics)
+        return physics->getSize().x;
+
+    // Fallback to radar block for nebulas
+    auto radar_block = entity.getComponent<RadarBlock>();
+    if (radar_block)
+        return radar_block->range;
+    
+    return 300.0f;
 }

@@ -30,9 +30,10 @@ public:
     float gravity;
     float electrical;
     float biological;
+    float size;
 
     RawRadarSignatureInfo()
-    : gravity(0), electrical(0), biological(0) {}
+    : gravity(0), electrical(0), biological(0), size(0) {}
 
     RawRadarSignatureInfo(float gravity, float electrical, float biological)
     : gravity(gravity), electrical(electrical), biological(biological) {}

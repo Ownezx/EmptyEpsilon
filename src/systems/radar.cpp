@@ -3,7 +3,9 @@
 #include "main.h"
 #include "components/faction.h"
 #include "components/scanning.h"
+#include "components/radarBlock.h"
 #include "radar.h"
+#include "utils/rawScannerUtil.h"
 
 int RadarRenderSystem::current_flags;
 float RadarRenderSystem::current_scale;
@@ -77,8 +79,8 @@ void BasicRadarRendering::renderOnRadar(sp::RenderTarget &renderer, sp::ecs::Ent
         signature.gravity += dynamic_signature->gravity;
     }
 
-    auto physics = entity.getComponent<sp::Physics>();
-    float r = (physics ? physics->getSize().x : 300.0f);
+    float r = GetEntityRadarTraceSize(entity);
+
     float band_radius = r;
 
     glm::u8vec4 band_color{32, 32, 32, 223};
