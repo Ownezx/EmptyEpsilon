@@ -99,14 +99,14 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         float is_far = false;
         // p is used for interpolation
         float p = 0;
+        float p2 = 0;
 
         // Calculate the angle of the object
         if (is_close)
         {
             p = 1 - dist / size;
-            // p *= p;
-            // interpolation
-            a_diff = 90.0f + 90.0f * p * p;
+            p2 = (p - 0.1) /  0.9;
+            a_diff = glm::min(90.0f + 90.0f * 10 * p, 179.999f);
         }
         else
         {
@@ -121,6 +121,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             }
         }
 
+        printf("%f\n", p);
         //  Transform to start at start_angle for ease to resolve
         float target_start = fmod(a_center - a_diff - start_angle, 360.0f);
         if (target_start < 0)
@@ -134,6 +135,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             point_count,
             &angles,
             p,
+            p2,
             is_far,
             a_center,
             a_diff,
@@ -148,7 +150,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
             {
                 float summing_function_value = 0;
-                if (p == 0)
+                if (p2 == 0)
                 {
                     // If we do not intersect with the object we just use the sensor
                     // signal function 1 - (x/(2*a_diff)^2
@@ -161,6 +163,10 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
                 {
                     // If we are in the object, we do a quadratic interpolation with 1 depending on the closeness.
                     summing_function_value = sumFunction(angles[i], a_center, a_diff);
+                    if (p > 0.1)
+                    {
+                        summing_function_value = summing_function_value * (1 - p2) + p2;
+                    }
                 }
     
                 float g = signature.biological;
