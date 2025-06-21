@@ -30,7 +30,6 @@ float farSumFunction(float angle, float target_angle, float target_angle_width, 
     return 1 - p;
 
 }
-
 std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, float start_angle, float arc_size, uint point_count, float range, float noise_floor)
 {
     // Sanitize the input parameters.
@@ -38,6 +37,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         start_angle += 360.0f;
     
     start_angle = fmod(start_angle, 360.0f);
+    if (start_angle<0)
+        start_angle += 360.0f;
     arc_size = glm::clamp(arc_size, 0.0f, 360.0f - 360.0f / point_count);
 
     
@@ -77,7 +78,6 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         float scale = 1.0;
 
         float size = GetEntityRadarTraceSize(entity);
-        printf("Size %f, dist %f\n", size, dist);
         if (size > dist)
         {
             scale = 1.0f;
@@ -106,7 +106,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             p = 1 - dist / size;
             // p *= p;
             // interpolation
-            a_diff = M_PI + M_PI * p * p;
+            a_diff = 90.0f + 90.0f * p * p;
         }
         else
         {
@@ -121,72 +121,85 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             }
         }
 
-        // Changing origin to the start angle to make it easier to understand
-        float transformed_target_center = fmod(a_center - start_angle, 360.0f);
-        if (transformed_target_center < 0)
-            transformed_target_center += 360.0f;
-        float transformed_target_start_angle = fmod(a_center - a_diff - start_angle, 360.0f);
-        if (transformed_target_start_angle < 0)
-            transformed_target_start_angle += 360.0f;
-        float transformed_target_stop_angle = fmod(a_center + a_diff - start_angle, 360.0f);
-        if (transformed_target_stop_angle < 0)
-            transformed_target_stop_angle += 360.0f;
-        float transformed_stop_angle = arc_size;
+        //  Transform to start at start_angle for ease to resolve
+        float target_start = fmod(a_center - a_diff - start_angle, 360.0f);
+        if (target_start < 0)
+            target_start += 360.0f;
 
+        float target_stop = fmod(a_center + a_diff - start_angle, 360.0f);
+        if (target_stop < 0)
+            target_stop += 360.0f;
 
-        // Find min an max angle from change of origin
-        float max_angle = glm::min(
-            transformed_target_stop_angle,
-            transformed_stop_angle);
-        
-        float min_angle;
-        if (transformed_target_start_angle > transformed_target_stop_angle)
+        auto cover_arc = [resolution,
+            point_count,
+            &angles,
+            p,
+            is_far,
+            a_center,
+            a_diff,
+            scale,
+            &signature,
+            dynamic_signature,
+            &return_data_points](float start_angle, float stop_angle) 
+        { 
+            // Here we need to find where the angle starts to do the sum
+            int target_start_angle_index = (int)(start_angle / resolution);
+            int target_stop_angle_index = (int)(stop_angle / resolution);
+            for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
+            {
+                float summing_function_value = 0;
+                if (p == 0)
+                {
+                    // If we do not intersect with the object we just use the sensor
+                    // signal function 1 - (x/(2*a_diff)^2
+                    if (is_far)
+                        summing_function_value = farSumFunction(angles[i], a_center, a_diff, resolution);
+                    else
+                        summing_function_value = sumFunction(angles[i], a_center, a_diff);
+                }
+                else
+                {
+                    // If we are in the object, we do a quadratic interpolation with 1 depending on the closeness.
+                    summing_function_value = sumFunction(angles[i], a_center, a_diff);
+                }
+    
+                float g = signature.biological;
+                float r = signature.electrical;
+                float b = signature.gravity;
+    
+                if (dynamic_signature)
+                {
+                    g += dynamic_signature->biological;
+                    r += dynamic_signature->electrical;
+                    b += dynamic_signature->gravity;
+                }
+    
+                return_data_points[i].biological += g * summing_function_value * scale;
+                return_data_points[i].electrical += r * summing_function_value * scale;
+                return_data_points[i].gravity += b * summing_function_value * scale;
+            }
+        };
+
+        if (target_start < arc_size && target_stop < arc_size && target_stop > target_start)
         {
-            min_angle = 0.0f; 
+            cover_arc(target_start, target_stop);
+        }
+        else if(target_start > arc_size && target_stop > arc_size && target_stop < target_start)
+        {
+            cover_arc(0, arc_size);
         }
         else
         {
-            min_angle = transformed_target_start_angle;
+            if (target_start < arc_size)
+            {
+                cover_arc(target_start, arc_size); 
+            }
+            if (target_stop < arc_size)
+            {
+                cover_arc(0, target_stop); 
+            }
         }
-        
 
-        // Here we need to find where the angle starts to do the sum
-        int target_start_angle_index = (int)ceil(min_angle  / resolution);
-        int target_stop_angle_index = (int)floor(max_angle  / resolution);
-
-        for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
-        {
-            float summing_function_value = 0;
-            if (p == 0)
-            {
-                // If we do not intersect with the object we just use the sensor
-                // signal function 1 - (x/(2*a_diff)^2
-                if (is_far)
-                    summing_function_value = farSumFunction(angles[i % point_count], a_center, a_diff, resolution);
-                else
-                     summing_function_value = sumFunction(angles[i % point_count], a_center, a_diff);
-            }
-            else
-            {
-                // If are in the object, we do a quadratic interpolation with 1 depending on the closeness.
-                summing_function_value = sumFunction(angles[i % point_count], a_center, a_diff) * (1 - p)  + p;
-            }
-
-            float g = signature.biological;
-            float r = signature.electrical;
-            float b = signature.gravity;
-
-            if (dynamic_signature)
-            {
-                g += dynamic_signature->biological;
-                r += dynamic_signature->electrical;
-                b += dynamic_signature->gravity;
-            }
-
-            return_data_points[i % point_count].biological += g * summing_function_value * scale;
-            return_data_points[i % point_count].electrical += r * summing_function_value * scale;
-            return_data_points[i % point_count].gravity += b * summing_function_value * scale;
-        }
     }
 
     // For each data point ...
@@ -216,6 +229,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
 
     return return_data_points;
 }
+
 
 std::vector<RawScannerDataPoint> Calculate360RawScannerData(glm::vec2 position, uint point_count, float range, float noise_floor)
 {
