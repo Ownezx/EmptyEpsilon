@@ -5,6 +5,12 @@
 #include "playerInfo.h"
 #include "random.h"
 #include "components/collision.h"
+#include "utils/FastNoiseLite.h"
+#include "engine.h" // Include SeriousProton's engine header for time functionality
+
+#define NOISE_OFFSET 7
+FastNoiseLite noise = FastNoiseLite(0);
+
 
 float sumFunction(float angle, float target_angle, float target_angle_width)
 {
@@ -28,8 +34,14 @@ float farSumFunction(float angle, float target_angle, float target_angle_width, 
     // Otherwise, we return a linear interpolation between 0 and 1.
     float p = 2 * abs(target_angle - angle) / (resolution  + target_angle_width );
     return 1 - p;
-
 }
+
+float noiseFunction(float angle, float offset, float second_offset, float noise_floor)
+{
+    // Here we use a 3D noise to have a noise with continuity in the end
+    return 0.7 * noise_floor * (noise.GetNoise(200.0f * cosf(M_PI * angle/180.0f), 100.0f * sinf(M_PI * angle/180.0f), offset + second_offset) - 0.5f) + random(-noise_floor, noise_floor);
+}
+
 std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, float start_angle, float arc_size, uint point_count, float range, float noise_floor)
 {
     // Sanitize the input parameters.
@@ -121,7 +133,6 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             }
         }
 
-        printf("%f\n", p);
         //  Transform to start at start_angle for ease to resolve
         float target_start = fmod(a_center - a_diff - start_angle, 360.0f);
         if (target_start < 0)
@@ -208,14 +219,18 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
 
     }
 
+
+    static float noise_offset = 0.0f;
     // For each data point ...
     // Now post processing to be as close to what it was before
     for (int i = 0; i < point_count; i++)
     {
-
-        return_data_points[i].biological = random(-noise_floor, noise_floor) + return_data_points[i].biological * 40;
-        return_data_points[i].electrical = random(-noise_floor, noise_floor) + random(-20, 40) * return_data_points[i].electrical;
-        return_data_points[i].gravity = random(-noise_floor, noise_floor) * (1.0f - return_data_points[i].gravity) + 60 * return_data_points[i].gravity;
+        
+        //noise_floor * (noise.GetNoise(i, noise_offset) - 0.5f);
+        printf("%f\n", noise_offset);
+        return_data_points[i].biological = noiseFunction(angles[i], noise_offset, 0, noise_floor) + return_data_points[i].biological * 40;
+        return_data_points[i].electrical = noiseFunction(angles[i], noise_offset, 1000, noise_floor) + random(-20, 40) * return_data_points[i].electrical;
+        return_data_points[i].gravity = noiseFunction(angles[i], noise_offset, 2000, noise_floor) + (random(-10, 10) + 50) * return_data_points[i].gravity;
 
         if (return_data_points[i].biological > 0)
             return_data_points[i].biological = sqrt(1 + return_data_points[i].biological) - 1;
@@ -232,6 +247,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
         else
             return_data_points[i].gravity = -(sqrt(1 - return_data_points[i].gravity) - 1);
     }
+    // TODO: Change this by a time base movement.
+    noise_offset += NOISE_OFFSET;
 
     return return_data_points;
 }
