@@ -76,39 +76,6 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     auto link_probe_button = new GuiToggleButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), [](bool value) {});
     link_probe_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    // Top buttons
-    auto toggle_map_button = new GuiToggleButton(top_left_container, "SENSOR_TOGGLE_MAP_ZOOM", tr("SensorButton", "Toggle Map Zoom"), [this](bool value)
-                                                 {
-        if (value)
-            this->target_map_zoom = 50000.0f;
-        else
-            this->target_map_zoom = 10000.0f; });
-    toggle_map_button->setValue(true)->setSize(GuiElement::GuiSizeMax, 50);
-
-    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [this](bool value)
-                                                 {
-        if (value)
-            this->radar->enableBiological();
-        else
-            this->radar->disableBiological(); });
-    biological_button->setSize(GuiElement::GuiSizeMax, 50);
-
-    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [this](bool value)
-                                                 {
-        if (value)
-            this->radar->enableElectrical();
-        else
-            this->radar->disableElectrical(); });
-    electrical_button->setSize(GuiElement::GuiSizeMax, 50);
-
-    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [this](bool value)
-                                              {
-        if (value)
-            this->radar->enableGravity();
-        else
-            this->radar->disableGravity(); });
-    gravity_button->setSize(GuiElement::GuiSizeMax, 50);
-
     // Setup the radar container
     targets.setAllowWaypointSelection();
     radar = new GuiRadarView(radar_container, "SENSOR_RADAR", 50000.0f, &targets);
@@ -131,6 +98,65 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         });
 
     scan_overlay = new SensorScreenOverlay(radar, "");
+
+
+    // Top buttons
+    auto toggle_map_button = new GuiToggleButton(top_left_container, "SENSOR_TOGGLE_MAP_ZOOM", tr("SensorButton", "Toggle Map Zoom"), [this](bool value)
+                                                 {
+        if (value)
+            this->target_map_zoom = 50000.0f;
+        else
+            this->target_map_zoom = 10000.0f; });
+    toggle_map_button->setValue(true)->setSize(GuiElement::GuiSizeMax, 50);
+
+    auto biological_button = new GuiToggleButton(top_left_container, "SENSOR_BIOLOGICAL", tr("SensorButton", "Biological"), [this](bool value)
+                                                 {
+        if (value)
+        {
+            this->radar->enableBiological();
+            biological_graph->setColor(colorConfig.overlay_biological_signal);
+        }
+        else
+        {
+            this->radar->disableBiological();
+            biological_graph->setColor(glm::u8vec4(255,255,255,50));
+        }
+        });
+    biological_button->setSize(GuiElement::GuiSizeMax, 50);
+    biological_button->setValue(true);
+
+    auto electrical_button = new GuiToggleButton(top_left_container, "SENSOR_ELECTRICAL", tr("SensorButton", "Electrical"), [this](bool value)
+                                                 {
+        if (value)
+        {
+            this->radar->enableElectrical();
+            electrical_graph->setColor(colorConfig.overlay_electrical_signal);
+        }
+        else
+        {
+            this->radar->disableElectrical();
+            electrical_graph->setColor(glm::u8vec4(255,255,255,50));
+        }
+        });
+    electrical_button->setSize(GuiElement::GuiSizeMax, 50);
+    electrical_button->setValue(true);
+
+    auto gravity_button = new GuiToggleButton(top_left_container, "SENSOR_GRAVITY", tr("SensorButton", "Gravity"), [this](bool value)
+                                              {
+        if (value)
+        {
+            this->radar->enableGravity();
+            gravity_graph->setColor(colorConfig.overlay_gravity_signal);
+        }
+        else
+        {
+            this->radar->disableGravity();
+            gravity_graph->setColor(glm::u8vec4(255,255,255,50));
+        }
+        });
+    gravity_button->setSize(GuiElement::GuiSizeMax, 50);
+    gravity_button->setValue(true);
+
 
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);

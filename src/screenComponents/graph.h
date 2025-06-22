@@ -18,9 +18,10 @@ public:
 
     GuiGraph *showAxisZero(bool value){show_axis_zero = value; return this;};
     void updateData(std::vector<float> data);
-    void setYlimit(float min, float max);
-    void setAutoScaleY(bool value) { auto_scale_y = value; }
-    GuiGraph* setOnDragCallback(std::function<void(glm::vec2)> callback) { on_drag_callback = callback; return this; }
+    GuiGraph *setYlimit(float min, float max);
+    GuiGraph *setAutoScaleY(bool value) { auto_scale_y = value; return this;}
+    GuiGraph *setColor(glm::u8vec4 value) {color = value; return this;}
+    GuiGraph *setOnDragCallback(std::function<void(glm::vec2)> callback) { on_drag_callback = callback; return this; }
 
     virtual void onDraw(sp::RenderTarget &renderer) override;
     virtual void onMouseDrag(glm::vec2 position, sp::io::Pointer::ID id) override;

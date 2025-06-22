@@ -74,12 +74,13 @@ void GuiGraph::onDraw(sp::RenderTarget &renderer)
     renderer.drawLineBlendAdd(graph_points, this->color); // red
 }
 
-void GuiGraph::setYlimit(float min, float max)
+GuiGraph* GuiGraph::setYlimit(float min, float max)
 
 {
     auto_scale_y = false;
     y_min = min;
     y_max = max;
+    return this;
 }
 
 void GuiGraph::onMouseDrag(glm::vec2 position, sp::io::Pointer::ID id)
