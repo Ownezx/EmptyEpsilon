@@ -57,7 +57,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     // Initialize the data's amplitude along each of the three color bands.
     std::vector<RawScannerDataPoint> return_data_points(point_count);
 
-    float resolution = arc_size / (point_count-1);
+    float resolution = arc_size / point_count;
 
     // Pre allocate the angles for computational speed
     float angles[point_count];
@@ -158,6 +158,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             // Here we need to find where the angle starts to do the sum
             int target_start_angle_index = (int)ceil(start_angle / resolution);
             int target_stop_angle_index = (int)ceil(stop_angle / resolution);
+            printf("%d, %d\n" ,target_start_angle_index, target_stop_angle_index);
             for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
             {
                 float summing_function_value = 0;
@@ -227,7 +228,6 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     {
         
         //noise_floor * (noise.GetNoise(i, noise_offset) - 0.5f);
-        printf("%f\n", noise_offset);
         return_data_points[i].biological = noiseFunction(angles[i], noise_offset, 0, noise_floor) + return_data_points[i].biological * 40;
         return_data_points[i].electrical = noiseFunction(angles[i], noise_offset, 1000, noise_floor) + random(-20, 40) * return_data_points[i].electrical;
         return_data_points[i].gravity = noiseFunction(angles[i], noise_offset, 2000, noise_floor) + (random(-10, 10) + 50) * return_data_points[i].gravity;
@@ -249,6 +249,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     }
     // TODO: Change this by a time base movement.
     noise_offset += NOISE_OFFSET;
+    if (noise_offset > 3000000)
+        noise_offset = 0;
 
     return return_data_points;
 }
