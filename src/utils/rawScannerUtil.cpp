@@ -156,8 +156,8 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             &return_data_points](float start_angle, float stop_angle) 
         { 
             // Here we need to find where the angle starts to do the sum
-            int target_start_angle_index = (int)(start_angle / resolution);
-            int target_stop_angle_index = (int)(stop_angle / resolution);
+            int target_start_angle_index = (int)ceil(start_angle / resolution);
+            int target_stop_angle_index = (int)ceil(stop_angle / resolution);
             for (int i = target_start_angle_index; i < target_stop_angle_index; i++)
             {
                 float summing_function_value = 0;
