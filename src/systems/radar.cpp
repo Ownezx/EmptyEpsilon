@@ -69,6 +69,8 @@ void BasicRadarRendering::renderOnRadar(sp::RenderTarget& renderer, sp::ecs::Ent
 
 void BasicRadarRendering::renderOnRadar(sp::RenderTarget &renderer, sp::ecs::Entity entity, glm::vec2 screen_position, float scale, float rotation, RawRadarSignatureInfo &component)
 {
+    if (RadarRenderSystem::current_flags & 0b1110000 == 0)
+        return;
     auto dynamic_signature = my_spaceship.getComponent<DynamicRadarSignatureInfo>();
 
     RawRadarSignatureInfo signature = component;
@@ -86,25 +88,25 @@ void BasicRadarRendering::renderOnRadar(sp::RenderTarget &renderer, sp::ecs::Ent
     glm::u8vec4 band_color{32, 32, 32, 223};
 
     // Electrical (red)
-    //if (show_electrical && signature.electrical > 0)
+    if ((RadarRenderSystem::current_flags & RadarRenderSystem::ElectricalTraces))
     {
-        band_color.r += 64 + std::min(1.0f, signature.electrical) * 100;
+        band_color.r += 64 + std::min(1.0f, abs(signature.electrical)) * 100;
         if (signature.electrical > 1.0f)
             band_radius += r * (signature.electrical - 1.0f);
     }
 
-    // Gravity (green)
-    //if (show_gravity && signature.gravity > 0)
+    // Gravity (blue)
+    if ((RadarRenderSystem::current_flags & RadarRenderSystem::GravitationalTraces))
     {
-        band_color.g += 64 + std::min(1.0f, signature.gravity) * 100;
+        band_color.b += 64 + std::min(1.0f, abs(signature.gravity)) * 100;
         if (signature.gravity > 1.0f)
             band_radius += r * (signature.gravity - 1.0f);
     }
 
-    // Biological (blue)
-    //if (show_biological && signature.biological > 0)
+    // Biological (green)
+    if ((RadarRenderSystem::current_flags & RadarRenderSystem::BiologicalTraces))
     {
-        band_color.b += 64 + std::min(1.0f, signature.biological) * 100;
+        band_color.g += 64 + std::min(1.0f, abs(signature.biological)) * 100;
         if (signature.biological > 1.0f)
             band_radius += r * (signature.biological - 1.0f);
     }

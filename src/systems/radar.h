@@ -53,6 +53,9 @@ public:
     static constexpr int FlagLongRange = 0x01;
     static constexpr int FlagShortRange = 0x02;
     static constexpr int FlagGM = 0x04;
+    static constexpr int BiologicalTraces = 0x08;
+    static constexpr int ElectricalTraces = 0x10;
+    static constexpr int GravitationalTraces = 0x20;
     static int current_flags;
 private:
     static float current_scale;

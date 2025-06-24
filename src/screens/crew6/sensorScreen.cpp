@@ -96,6 +96,7 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
         },
         [this](glm::vec2 position) { // up
         });
+    radar->enableGravity()->enableElectrical()->enableBiological();
 
     scan_overlay = new SensorScreenOverlay(radar, "");
 
