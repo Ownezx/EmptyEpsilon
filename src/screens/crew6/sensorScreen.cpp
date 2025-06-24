@@ -4,6 +4,7 @@
 
 
 #include "components/radar.h"
+#include "components/collision.h"
 
 #include "screenComponents/radarView.h"
 #include "screenComponents/graph.h"
@@ -73,7 +74,13 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
                                             { this->scan_overlay->clearMarkers(); });
     reset_marks_button->setSize(GuiElement::GuiSizeMax, 50);
 
-    auto link_probe_button = new GuiToggleButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), [](bool value) {});
+    link_probe_button = new GuiToggleButton(right_container, "SENSOR_LINK_PROBE", tr("SensorButton", "Link Probe"), [this](bool value) {
+        auto lrr = my_spaceship.getComponent<LongRangeRadar>();
+        if (value && lrr && lrr->radar_view_linked_entity)
+            this->radar->setAutoCentering(false);
+        if(!value)
+            this->radar->setAutoCentering(true);
+    });
     link_probe_button->setSize(GuiElement::GuiSizeMax, 50);
 
     // Setup the radar container
@@ -208,6 +215,20 @@ void SensorScreen::onDraw(sp::RenderTarget &renderer)
     auto lrr = my_spaceship.getComponent<LongRangeRadar>();
     if(!lrr)
         return; 
+
+    // Deal with the probe
+    if(link_probe_button->getValue() && lrr->radar_view_linked_entity){
+        auto transform = lrr->radar_view_linked_entity.getComponent<sp::Transform>();
+        if (transform)
+            radar->setViewPosition(transform->getPosition())->show();
+    }
+    else if(link_probe_button->getValue() && !lrr->radar_view_linked_entity)
+    {
+        this->radar->setAutoCentering(true);
+        link_probe_button->setValue(false);
+    }
+    else{}
+    
     std::vector<RawScannerDataPoint> scanner_data =
         CalculateRawScannerData(this->radar->getViewPosition(),
                                 scan_overlay->getBearing() - scan_overlay->getArc() / 2.0f - 90.0f,

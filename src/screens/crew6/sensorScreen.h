@@ -9,6 +9,7 @@
 class GuiRadarView;
 class GuiGraph;
 class GuiGraphLabel;
+class GuiToggleButton;
 class SensorScreenOverlay;
 
 class SensorScreen : public GuiOverlay
@@ -30,6 +31,7 @@ public:
     GuiGraph* biological_graph;
     GuiGraph* gravity_graph;
     GuiGraphLabel* graph_label;
+    GuiToggleButton* link_probe_button;
     TargetsContainer targets;
     SensorScreenOverlay* scan_overlay;
 
