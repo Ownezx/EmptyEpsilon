@@ -88,25 +88,25 @@ void BasicRadarRendering::renderOnRadar(sp::RenderTarget &renderer, sp::ecs::Ent
     glm::u8vec4 band_color{32, 32, 32, 223};
 
     // Electrical (red)
-    if ((RadarRenderSystem::current_flags & RadarRenderSystem::ElectricalTraces))
+    if ((RadarRenderSystem::current_flags & RadarRenderSystem::ElectricalTraces) && signature.electrical > 0.0f)
     {
-        band_color.r += 64 + std::min(1.0f, abs(signature.electrical)) * 100;
+        band_color.r += 64 + std::min(1.0f, abs(signature.electrical) * 100);
         if (signature.electrical > 1.0f)
             band_radius += r * (signature.electrical - 1.0f);
     }
 
     // Gravity (blue)
-    if ((RadarRenderSystem::current_flags & RadarRenderSystem::GravitationalTraces))
+    if ((RadarRenderSystem::current_flags & RadarRenderSystem::GravitationalTraces) && signature.gravity > 0.0f)
     {
-        band_color.b += 64 + std::min(1.0f, abs(signature.gravity)) * 100;
+        band_color.b += 64 + std::min(1.0f, abs(signature.gravity) * 100);
         if (signature.gravity > 1.0f)
             band_radius += r * (signature.gravity - 1.0f);
     }
 
     // Biological (green)
-    if ((RadarRenderSystem::current_flags & RadarRenderSystem::BiologicalTraces))
+    if ((RadarRenderSystem::current_flags & RadarRenderSystem::BiologicalTraces) && signature.biological > 0.0f)
     {
-        band_color.g += 64 + std::min(1.0f, abs(signature.biological)) * 100;
+        band_color.g += 64 + std::min(1.0f, abs(signature.biological) * 100);
         if (signature.biological > 1.0f)
             band_radius += r * (signature.biological - 1.0f);
     }
