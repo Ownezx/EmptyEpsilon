@@ -169,15 +169,15 @@ SensorScreen::SensorScreen(GuiContainer *owner, CrewPosition crew_position)
     // Setup the sensor container
     electrical_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_electrical_signal);
     electrical_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    electrical_graph->showAxisZero(true)->setYlimit(-10.0f, 10.0f);
+    electrical_graph->showAxisZero(true)->setYlimit(-2.0f, 5.0f);
 
     biological_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_biological_signal);
     biological_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    biological_graph->showAxisZero(false)->setYlimit(-10.0f, 10.0f);
+    biological_graph->showAxisZero(false)->setYlimit(-2.0f, 5.0f);
 
     gravity_graph = new GuiGraph(sensor_container, "BIOLOGICAL_GRAPH", colorConfig.overlay_gravity_signal);
     gravity_graph->setSize(GuiElement::GuiSizeMax, GuiElement::GuiSizeMax);
-    gravity_graph->showAxisZero(false)->setYlimit(-10.0f, 10.0f);
+    gravity_graph->showAxisZero(false)->setYlimit(-2.0f, 5.0f);
 }
 
 void SensorScreen::onDraw(sp::RenderTarget &renderer)

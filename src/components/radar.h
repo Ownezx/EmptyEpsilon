@@ -70,7 +70,7 @@ public:
     float long_range = 30000.0f;
 
     float raw_radar_range = 60000.0f;
-    float raw_radar_noise_floor = 1.0f;
+    float raw_radar_noise_floor = 0.3f;
 
     bool waypoints_dirty = true;
     std::vector<glm::vec2> waypoints;

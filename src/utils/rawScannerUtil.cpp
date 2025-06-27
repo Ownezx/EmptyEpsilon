@@ -70,6 +70,7 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     }
 
     // For each SpaceObject ...
+    // TODO: Using the same segmented query as the pathfinding might be more efficient
     for (auto [entity, signature, dynamic_signature, transform] : sp::ecs::Query<RawRadarSignatureInfo, sp::ecs::optional<DynamicRadarSignatureInfo>, sp::Transform>())
     {
         // Don't measure our own ship.
@@ -227,9 +228,10 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
     {
 
         // noise_floor * (noise.GetNoise(i, noise_offset) - 0.5f);
-        return_data_points[i].biological = noiseFunction(angles[i], noise_offset, 0, noise_floor) + fmaxf(return_data_points[i].biological, 0) * 40;
-        return_data_points[i].electrical = noiseFunction(angles[i], noise_offset, 1000, noise_floor) + random(-20, 40) * fmaxf(return_data_points[i].electrical, 0);
-        return_data_points[i].gravity = noiseFunction(angles[i], noise_offset, 2000, noise_floor) + (random(-10, 10) + 50) * fmaxf(return_data_points[i].gravity, 0);
+        return_data_points[i].biological =  fmaxf(return_data_points[i].biological, 0) * 40;
+        return_data_points[i].electrical =  random(-10, 30) * fmaxf(return_data_points[i].electrical, 0);
+        return_data_points[i].gravity =  (random(-10, 10) + 30) * fmaxf(return_data_points[i].gravity, 0);
+        
 
         if (return_data_points[i].biological > 0)
             return_data_points[i].biological = sqrt(1 + return_data_points[i].biological) - 1;
@@ -245,6 +247,13 @@ std::vector<RawScannerDataPoint> CalculateRawScannerData(glm::vec2 position, flo
             return_data_points[i].gravity = sqrt(1 + return_data_points[i].gravity) - 1;
         else
             return_data_points[i].gravity = -(sqrt(1 - return_data_points[i].gravity) - 1);
+
+        return_data_points[i].biological += noiseFunction(angles[i], noise_offset, 0, noise_floor);
+        return_data_points[i].electrical += noiseFunction(angles[i], noise_offset, 1000, noise_floor);
+        return_data_points[i].gravity += noiseFunction(angles[i], noise_offset, 2000, noise_floor);
+        return_data_points[i].biological *= 0.5;
+        return_data_points[i].electrical *= 0.5;
+        return_data_points[i].gravity *= 0.5;
     }
     // TODO: Change this by a time base movement.
     noise_offset += NOISE_OFFSET;
